@@ -38,7 +38,7 @@ export function Header() {
   }, []);
   return <header className={`site-header${scrolled ? " is-scrolled" : ""}`} onKeyDown={event => {
     if (event.key === "Escape" && open) { setOpen(false); toggle.current?.focus(); }
-  }}><div className="header-inner"><Brand/><button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? "Close ✕" : "Menu ☰"}</button><nav id="main-nav" aria-label="Main navigation" className={open ? "nav open" : "nav"}>{navigation.map(([name, id]) => <NavLink key={id} to={id} onClick={() => setOpen(false)}>{name}</NavLink>)}<Link className="nav-join" to="/join" onClick={() => setOpen(false)}>Find your people <span>↗</span></Link></nav></div></header>;
+  }}><div className="header-inner"><Brand/><button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? "Close ✕" : "Menu ☰"}</button><nav id="main-nav" aria-label="Main navigation" className={open ? "nav open" : "nav"}>{navigation.map(([name, id]) => <NavLink key={id} to={id} onClick={() => setOpen(false)}>{name}</NavLink>)}<Link className="nav-staff button secondary" to="/control" onClick={() => setOpen(false)}>Staff Sign In</Link><Link className="nav-join button primary" to="/join" onClick={() => setOpen(false)}>Join Discord <span aria-hidden="true">↗</span></Link></nav></div></header>;
 }
 type ShowcaseSlide = { label: string; title: string; text: string; theme: string; image: string };
 const slides: ShowcaseSlide[] = [

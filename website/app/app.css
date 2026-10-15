@@ -76,3 +76,43 @@
 .control-identity>div{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:12px 0}.control-identity dt{color:var(--muted)}.control-identity dd{margin:0;overflow-wrap:anywhere}
 .control-page .button:disabled{opacity:.55}.control-page>.text-link{margin-top:16px;text-decoration:underline;text-underline-offset:4px}
 @media(max-width:760px){.control-page{padding-top:36px}.control-brand{padding-top:24px}}
+
+/* Staff entry stays secondary to the official Discord action. */
+.nav .nav-staff{border:1px solid #505257;background:#1a1c20;color:var(--cream,#f6f0e8);border-radius:5px;padding:12px 14px;white-space:nowrap}
+.nav .nav-join{background:var(--orange);color:#20180f;border-color:var(--orange);white-space:nowrap}
+.nav .nav-join span{color:inherit}.nav .nav-join:hover,.nav .nav-join:focus-visible{background:#ffa65f;color:#20180f}
+.dashboard-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:40px;padding-top:32px;padding-bottom:64px;align-items:start}
+.dashboard-sidebar{position:sticky;top:24px;max-height:calc(100dvh - 48px);overflow-y:auto;display:flex;flex-direction:column;gap:24px;border:1px solid var(--line);background:#1a1c20;border-radius:12px;padding:24px 18px}
+.dashboard-sidebar .brand{font-size:20px}.dashboard-sidebar .brand svg{width:30px;height:30px}
+.dashboard-nav-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.dashboard-menu-toggle{display:none;min-height:44px;border:1px solid #505257;border-radius:5px;background:transparent;padding:8px 12px;font-size:14px}
+.dashboard-nav{display:flex;flex-direction:column;gap:6px}
+.dashboard-nav>a,.dashboard-nav-unavailable{padding:12px;border-radius:6px;font-size:14px;line-height:1.5}
+.dashboard-nav>a[aria-current="page"]{background:#f38c3e19;color:var(--orange);border-left:3px solid var(--orange)}
+.dashboard-nav-unavailable{display:flex;justify-content:space-between;gap:12px;color:#b4b4b5}
+.dashboard-nav-unavailable small{font-size:11px;align-self:center;color:#a1a2a3}
+.dashboard-sidebar-actions{display:flex;flex-direction:column;align-items:flex-start;gap:20px;padding-top:20px;border-top:1px solid var(--line)}
+.dashboard-sidebar-actions>.text-link{font-size:14px;text-decoration:underline;text-underline-offset:4px}
+.dashboard-main{min-width:0}.dashboard-welcome h1{font-size:clamp(34px,4vw,52px);letter-spacing:-1.5px;line-height:1.15;overflow-wrap:anywhere}
+.dashboard-welcome>p{font-size:14px;line-height:1.8;color:var(--muted);margin-top:20px}
+.dashboard-account{display:flex;align-items:center;flex-wrap:wrap;gap:16px;overflow-wrap:anywhere}
+.dashboard-role{display:inline-block;border:1px solid #65503b;background:#f38c3e0a;color:var(--orange);padding:5px 12px;border-radius:20px}
+.dashboard-notice{margin-top:32px;padding:24px;border:1px solid #65503b;border-radius:10px;background:#f38c3e06}
+.dashboard-notice h2{font-size:21px;line-height:1.4}.dashboard-notice p{color:var(--muted);font-size:14px;line-height:1.8;margin-top:12px}
+.dashboard-tools{margin-top:36px}.dashboard-section-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;justify-content:space-between;margin-bottom:20px}
+.dashboard-section-heading h2{font-size:25px}.dashboard-section-heading>span{font-size:12px}
+.dashboard-tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.dashboard-tool-grid .public-card{padding:24px}.dashboard-tool-grid .public-card h3{font-size:21px}
+@media(min-width:1101px) and (max-width:1280px){
+ .menu-toggle{display:block;background:none;border:1px solid #45474b;border-radius:4px;padding:8px 10px;font-size:14px}
+ .nav{display:none;position:absolute;top:94px;left:0;right:0;background:#1a1c20;padding:20px;border-bottom:1px solid var(--line)}
+ .nav.open{display:flex;flex-direction:column;align-items:stretch;gap:0}.nav a{padding:13px}.nav-join{margin-top:10px}
+}
+@media(max-width:1280px){.nav .nav-staff{margin-top:12px}.nav .nav-join{margin-top:10px}}
+@media(max-width:900px){
+ .dashboard-layout{grid-template-columns:1fr;gap:28px;padding-top:24px}
+ .dashboard-sidebar{position:static;max-height:none;overflow:visible;gap:16px;padding:20px}.dashboard-menu-toggle{display:block}
+ .dashboard-nav{display:none}.dashboard-nav.is-open{display:flex}
+ .dashboard-sidebar-actions{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:16px}
+}
+@media(max-width:600px){.dashboard-tool-grid{grid-template-columns:1fr}.dashboard-notice{padding:20px}.dashboard-nav-unavailable{flex-wrap:wrap}}

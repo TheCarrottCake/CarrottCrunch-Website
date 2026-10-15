@@ -135,3 +135,9 @@ See [dynamic content setup, demonstration mode, files, and validation](docs/dyna
 Crunch Control now has a branded `/control/login` and server-protected `/control` welcome page. Discord authorization-code authentication requests only `identify`, uses S256 PKCE and one-use browser-bound state, and grants sessions only to explicitly authorized immutable Discord user IDs. D1 stores hashed opaque sessions with expiry/revocation; active mutations require same-origin CSRF protection. Roles are Moderator, Administrator and Owner. No role-changing or public registration endpoint is provided.
 
 See [configuration, initial Owner bootstrap, Codespaces setup and testing](docs/staff-authentication.md). Apply the local migration with `npm run db:migrate:local`; configure ignored `.dev.vars.content_dev` using the blank `.dev.vars.example` template and your Discord Developer Portal callback, then run `npm run dev:content`. Missing configuration fails closed. Real Discord browser sign-in still requires your credentials and manual verification. Public pages, joining, and News & Events publication rules are unchanged. Nothing was deployed.
+
+## Staff entry and dashboard (Task 03B)
+
+The public header now provides secondary Staff Sign In navigation to `/control`, alongside primary Join Discord. The protected staff landing page has a responsive sidebar/mobile Tools menu, verified name and role, secure Sign Out, and role-specific future tools clearly labelled unavailable. There are no management links or editing operations yet. Authentication/session protections and public content rules are unchanged.
+
+See [dashboard behavior, role visibility, changed files, and validation](docs/staff-dashboard.md). Public pages retain the Staff Sign In label because their loaders do not expose staff authentication state. Desktop/mobile interaction checks use existing component tooling; visual/browser and live Discord checks remain manual.

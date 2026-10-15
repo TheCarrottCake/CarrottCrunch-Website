@@ -1,7 +1,8 @@
-import { data, Form, isRouteErrorResponse, redirect } from 'react-router';
+import { data, isRouteErrorResponse, redirect } from 'react-router';
 import type { Route } from './+types/control';
 import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
 import { AuthError, requireStaff, staffCsrfToken, staffAuthHeaders } from '../lib/staff-auth.server';
+import { ControlDashboard } from '../components/control-dashboard';
 import { ControlShell } from '../components/control-shell';
 
 export function headers() { return staffAuthHeaders; }
@@ -19,15 +20,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 }
 export default function Control({ loaderData }: Route.ComponentProps) {
-  return <ControlShell title="You’re in.">
-    <p>Welcome, <strong>{loaderData.identity.displayName}</strong>.</p>
-    <dl className="control-identity"><div><dt>Discord username</dt><dd>{loaderData.identity.username}</dd></div><div><dt>Staff role</dt><dd>{loaderData.role}</dd></div></dl>
-    <p className="muted">This is the staff access foundation. Content editing and other staff tools are not available yet.</p>
-    <Form method="post" action="/control/logout" reloadDocument>
-      <input type="hidden" name="_csrf" value={loaderData.csrf} />
-      <button className="button secondary">Sign out</button>
-    </Form>
-  </ControlShell>;
+  return <ControlDashboard {...loaderData} />;
 }
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   const forbidden = isRouteErrorResponse(error) && error.status === 403;
