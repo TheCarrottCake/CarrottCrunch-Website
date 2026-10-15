@@ -16,6 +16,7 @@
     "dev:content": "CLOUDFLARE_ENV=content_dev react-router dev"
   },
   "dependencies": {
+    "@cf-wasm/photon": "^0.3.4",
     "isbot": "^5.1.36",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

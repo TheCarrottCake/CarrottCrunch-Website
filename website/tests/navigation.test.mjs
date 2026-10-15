@@ -70,13 +70,13 @@ test('dashboard role navigation, mobile toggle/Escape, and CSRF logout remain in
     const nav = () => one(tree, node => node.props?.id === 'control-nav');
     const toggle = () => one(tree, node => node.props?.['aria-controls'] === 'control-nav');
     const unavailable = nodes(nav(), node => node.props?.['aria-disabled'] === 'true');
-    assert.equal(unavailable.length, dashboardTools(role).length);
+    assert.equal(unavailable.length, dashboardTools(role).filter(tool => !tool.href).length);
     for (const item of unavailable) {
       assert.equal(item.props.href, undefined); assert.equal(item.props.to, undefined);
       assert.equal(item.props.children[1].props.children, 'Unavailable');
     }
     const links = nodes(nav(), node => node.props?.to);
-    assert.deepEqual(links.map(node => node.props.to), ['/control']);
+    assert.deepEqual(links.map(node => node.props.to), ['/control', '/control/media']);
     assert.equal(one(tree, node => node.type === 'main').props.id, 'control-main');
     assert.equal(one(tree, node => node.props?.to === '/').props.children, '← Public website');
     const form = one(tree, node => node.props?.action === '/control/logout');

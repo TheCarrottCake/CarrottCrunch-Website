@@ -25,7 +25,8 @@
 				"database_id": "00000000-0000-0000-0000-000000000001",
 				"remote": false,
 				"migrations_dir": "migrations"
-			}]
+			}],
+			"r2_buckets": [{ "binding": "MEDIA_BUCKET", "bucket_name": "carrottcrunch-media-local", "remote": false }]
 		}
 	}
 	/**

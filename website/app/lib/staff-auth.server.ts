@@ -108,7 +108,7 @@ export async function beginDiscordLogin(request: Request, env: AuthEnvironment, 
 async function providerJson(response: Response): Promise<Record<string, unknown>> {
   if (!response.ok) throw new AuthError('failed');
   const text = await response.text();
-  if (text.length > 65536) throw new AuthError('failed');
+  if (text.length > 262144) throw new AuthError('failed');
   let value: unknown;
   try { value = JSON.parse(text); } catch { throw new AuthError('failed'); }
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new AuthError('failed');
@@ -254,8 +254,23 @@ export async function requireSiteAction(request: Request, env: AuthEnvironment, 
   let provided = request.headers.get('X-CSRF-Token');
   if (!provided) {
     if (!request.headers.get('Content-Type')?.startsWith('application/x-www-form-urlencoded')) throw new AuthError('csrf');
-    const text = await request.clone().text();
-    if (text.length > 16384) throw new AuthError('csrf');
+    // Media metadata/approval forms can exceed 16 KB after URL encoding. Bound
+    // the stream at 256 KiB before decoding rather than buffering an unlimited request.
+    const reader = request.clone().body?.getReader();
+    if (!reader) throw new AuthError('csrf');
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > 262144) { void reader.cancel(); throw new AuthError('csrf'); }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+    const text = new TextDecoder().decode(bytes);
     const params = new URLSearchParams(text);
     if (params.getAll('_csrf').length !== 1) throw new AuthError('csrf');
     provided = params.get('_csrf');
