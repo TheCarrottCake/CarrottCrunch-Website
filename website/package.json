@@ -9,7 +9,11 @@
     "deploy": "npm run build && wrangler deploy",
     "preview": "npm run build && vite preview",
     "cf-typegen": "wrangler types",
-    "postinstall": "wrangler types"
+    "postinstall": "wrangler types",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "db:migrate:local": "node scripts/content-local.mjs migrate",
+    "db:seed:local": "node scripts/content-local.mjs seed",
+    "dev:content": "CLOUDFLARE_ENV=content_dev react-router dev"
   },
   "dependencies": {
     "isbot": "^5.1.36",

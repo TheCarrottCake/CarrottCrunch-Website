@@ -13,7 +13,20 @@
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
+	"upload_source_maps": true,
+	// Local content development only. No production D1 binding or remote database.
+	"env": {
+		"content_dev": {
+			"vars": { "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare", "CONTENT_DEMO_MODE": "false" },
+			"d1_databases": [{
+				"binding": "CONTENT_DB",
+				"database_name": "carrottcrunch-content-local",
+				"database_id": "00000000-0000-0000-0000-000000000001",
+				"remote": false,
+				"migrations_dir": "migrations"
+			}]
+		}
+	}
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

@@ -23,3 +23,48 @@
 @media(prefers-reduced-motion:reduce){.site-header{transition:none}}
 
 @media(max-width:400px){.showcase{height:460px}.showcase-bottom{flex-wrap:wrap;gap:8px}.scene-copy{bottom:148px}.scene-copy h2{font-size:28px}}
+
+/* Public Discord handoff uses the existing brand and button styles. */
+.join-page{max-width:720px;padding-top:64px;padding-bottom:64px;display:flex;flex-direction:column;align-items:flex-start;gap:24px}
+.join-page>.eyebrow{margin-top:24px;color:var(--orange)}
+.join-page h1{margin-top:0}
+.join-page p{line-height:1.8;max-width:60ch}
+.join-page .button{white-space:normal;text-align:center}
+
+/* Public routes extend the existing design system without altering homepage sections. */
+.nav a[aria-current="page"]{color:var(--orange);text-decoration:underline;text-underline-offset:6px}
+.public-page{padding-top:64px;padding-bottom:40px}
+.public-page-intro{max-width:780px;margin-bottom:40px}
+.public-page-intro>p{color:var(--muted);line-height:1.8;margin-top:24px}
+.public-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.public-card{border:1px solid var(--line);border-radius:10px;background:#1a1c20;padding:28px}
+.public-card h2{font-size:24px;line-height:1.3;margin-bottom:16px}
+.public-card p{font-size:14px;line-height:1.8;color:var(--muted)}
+.public-card .micro{color:var(--orange);margin-bottom:16px}
+.public-page-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+@media(min-width:1101px){.nav{gap:20px}.nav-join{margin-left:0}}
+@media(min-width:761px) and (max-width:1100px){
+  .menu-toggle{display:block;background:none;border:1px solid #45474b;border-radius:4px;padding:8px 10px}
+  .nav{display:none;position:absolute;top:94px;left:0;right:0;background:#1a1c20;padding:20px;border-bottom:1px solid var(--line)}
+  .nav.open{display:flex;flex-direction:column;align-items:stretch;gap:0}
+  .nav a{padding:13px}.nav-join{margin-top:10px}
+}
+@media(max-width:760px){.public-page{padding-top:39px}.public-card-grid{grid-template-columns:1fr}.public-card{padding:24px}.public-page-intro{margin-bottom:28px}}
+
+/* News and events reuse the public cards and homepage news column. */
+.content-section{margin-top:32px}.content-section>h2{margin-bottom:24px;font-size:28px}
+.content-notice{border:1px solid #65503b;border-radius:8px;padding:16px;margin:16px 0;color:#f6f0e8;line-height:1.7}
+.content-empty{color:var(--muted);line-height:1.8;margin:20px 0}
+.public-card h3,.public-card h4{font-size:21px;line-height:1.4;margin:12px 0}.public-card h3 a:hover,.news-item h3 a:hover{color:var(--orange)}
+.public-card .text-link{display:inline-block;margin-top:16px}.public-card p+p{margin-top:12px}
+.event-group{margin:24px 0}.event-group>h3{margin-bottom:16px;color:var(--orange)}
+.homepage-events{margin-top:28px}.homepage-events>h3{font-size:21px}
+.event-summary{border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
+.event-summary h4{font-size:18px;margin:8px 0}.event-time{font-size:14px;line-height:1.8;color:var(--muted)}
+.news-article{max-width:860px}.news-article h1{font-size:clamp(34px,5vw,60px);overflow-wrap:anywhere}
+.news-article .public-page-intro{margin-top:24px}.content-body{line-height:1.8;overflow-wrap:anywhere}
+.content-body>*+*{margin-top:20px}.content-body p{white-space:pre-wrap}.content-body h2{font-size:28px}.content-body h3{font-size:22px}
+.content-body ul{list-style:disc;padding-left:24px}.content-body a{text-decoration:underline;text-underline-offset:4px;color:var(--orange)}
+.content-body code{background:#ffffff0a;padding:2px 5px;border-radius:4px}
+.route-status:not(:empty){position:fixed;bottom:20px;left:20px;z-index:10;background:#1a1c20;border:1px solid var(--orange);padding:12px 20px;border-radius:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

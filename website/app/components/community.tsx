@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, NavLink } from "react-router";
 
 /** Temporary bitten-C brand mark, shared by branding and decorative accents. */
 export function CrunchMark({ className }: { className?: string }) {
@@ -22,9 +23,9 @@ export function FeatureCard({ icon, name, text, tag, accent }: FeatureCardProps)
 }
 
 export function Brand() {
-  return <a className="brand" href="#home" aria-label="CarrottCrunch home"><CrunchMark/><span>Carrott<span className="brand-light">Crunch</span><span className="brand-dot">.</span></span></a>;
+  return <Link className="brand" to="/" aria-label="CarrottCrunch home"><CrunchMark/><span>Carrott<span className="brand-light">Crunch</span><span className="brand-dot">.</span></span></Link>;
 }
-const navigation = [["Community", "community"], ["Gallery", "gallery"], ["News", "news"], ["Server", "server"]];
+const navigation = [["Community", "/community"], ["Servers", "/servers"], ["Gallery", "/gallery"], ["Updates", "/updates"], ["About", "/about"], ["Safety", "/safety"]];
 export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -37,7 +38,7 @@ export function Header() {
   }, []);
   return <header className={`site-header${scrolled ? " is-scrolled" : ""}`} onKeyDown={event => {
     if (event.key === "Escape" && open) { setOpen(false); toggle.current?.focus(); }
-  }}><div className="header-inner"><Brand/><button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? "Close ✕" : "Menu ☰"}</button><nav id="main-nav" aria-label="Main navigation" className={open ? "nav open" : "nav"}>{navigation.map(([name, id]) => <a key={id} href={`#${id}`} onClick={() => setOpen(false)}>{name}</a>)}<a className="nav-join" href="#join" onClick={() => setOpen(false)}>Find your people <span>↗</span></a></nav></div></header>;
+  }}><div className="header-inner"><Brand/><button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? "Close ✕" : "Menu ☰"}</button><nav id="main-nav" aria-label="Main navigation" className={open ? "nav open" : "nav"}>{navigation.map(([name, id]) => <NavLink key={id} to={id} onClick={() => setOpen(false)}>{name}</NavLink>)}<Link className="nav-join" to="/join" onClick={() => setOpen(false)}>Find your people <span>↗</span></Link></nav></div></header>;
 }
 type ShowcaseSlide = { label: string; title: string; text: string; theme: string; image: string };
 const slides: ShowcaseSlide[] = [
@@ -61,5 +62,5 @@ export function SectionHeading({ number, eyebrow, title, children }: { number: s
   return <div className="section-heading"><div><div className="eyebrow"><span className="section-number">{number} /</span> {eyebrow}</div><h2>{title}</h2></div>{children}</div>;
 }
 export function Footer() {
-  return <footer className="site-footer"><div className="footer-top"><div><Brand/><p>Good games. Great people. A little extra crunch.</p></div><a href="#home">Back to the top ↑</a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} CarrottCrunch</span><span>Made for the moments between the games.</span><span>Community website · In development</span></div></footer>;
+  return <footer className="site-footer"><div className="footer-top"><div><Brand/><p>Good games. Great people. A little extra crunch.</p></div><a href="#page-top">Back to the top ↑</a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} CarrottCrunch</span><span>Made for the moments between the games.</span><span>Community website · In development</span></div></footer>;
 }
