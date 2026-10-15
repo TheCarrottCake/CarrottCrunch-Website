@@ -1,0 +1,260 @@
+/** Server-only authentication. Never log Requests, cookies, provider responses, or errors here. */
+export type StaffRole = 'Moderator' | 'Administrator' | 'Owner';
+export type AuthEnvironment = {
+  CONTENT_DB?: D1Database;
+  DISCORD_CLIENT_ID?: string;
+  DISCORD_CLIENT_SECRET?: string;
+  CONTROL_ORIGIN?: string;
+  AUTH_CSRF_SECRET?: string;
+  INITIAL_OWNER_DISCORD_ID?: string;
+};
+export type AuthErrorCode = 'unavailable' | 'invalid' | 'cancelled' | 'denied' | 'failed' | 'csrf';
+export class AuthError extends Error {
+  readonly code: AuthErrorCode;
+  constructor(code: AuthErrorCode) { super('Staff authentication request could not be completed'); this.code = code; }
+}
+export const staffAuthHeaders = {
+  'Cache-Control': 'no-store',
+  'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Content-Security-Policy': "frame-ancestors 'none'; base-uri 'self'",
+};
+const snowflake = /^[0-9]{17,20}$/;
+const opaque = /^[a-f0-9]{64}$/;
+const SESSION_MS = 8 * 60 * 60 * 1000;
+const OAUTH_MS = 10 * 60 * 1000;
+const ranks: Record<StaffRole, number> = { Moderator: 1, Administrator: 2, Owner: 3 };
+export function permitsRole(actual: StaffRole, minimum: StaffRole): boolean {
+  return Object.hasOwn(ranks, actual) && Object.hasOwn(ranks, minimum) && ranks[actual] >= ranks[minimum];
+}
+export function authConfiguration(env: AuthEnvironment, development = false) {
+  if (!env.CONTENT_DB || (!env.DISCORD_CLIENT_ID || !snowflake.test(env.DISCORD_CLIENT_ID)) || !env.DISCORD_CLIENT_SECRET?.trim() ||
+      !env.CONTROL_ORIGIN || !env.AUTH_CSRF_SECRET || env.AUTH_CSRF_SECRET.length < 32 ||
+      (env.INITIAL_OWNER_DISCORD_ID !== undefined && !snowflake.test(env.INITIAL_OWNER_DISCORD_ID))) throw new AuthError('unavailable');
+  let url: URL;
+  try { url = new URL(env.CONTROL_ORIGIN); } catch { throw new AuthError('unavailable'); }
+  const localHttp = development && url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  if ((!localHttp && url.protocol !== 'https:') || url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new AuthError('unavailable');
+  return {
+    db: env.CONTENT_DB, origin: url.origin, callback: `${url.origin}/control/auth/callback`,
+    secure: url.protocol === 'https:', clientId: env.DISCORD_CLIENT_ID,
+    clientSecret: env.DISCORD_CLIENT_SECRET, csrfSecret: env.AUTH_CSRF_SECRET,
+  };
+}
+type AuthConfig = ReturnType<typeof authConfiguration>;
+function checkHost(request: Request, config: AuthConfig) {
+  if (new URL(request.url).origin !== config.origin) throw new AuthError('invalid');
+}
+function checkMutationOrigin(request: Request, config: AuthConfig) {
+  checkHost(request, config);
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) || request.headers.get('Origin') !== config.origin ||
+      (request.headers.has('Sec-Fetch-Site') && request.headers.get('Sec-Fetch-Site') !== 'same-origin')) throw new AuthError('csrf');
+}
+function randomToken(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+export async function hashToken(value: string): Promise<string> {
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+async function pkceChallenge(verifier: string): Promise<string> {
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  return btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+}
+function cookieName(config: AuthConfig, kind: 'session' | 'oauth') {
+  return `${config.secure ? '__Host-' : ''}cc_${kind}`;
+}
+function readCookie(request: Request, name: string): string | null {
+  const values = (request.headers.get('Cookie') ?? '').split(';').map(part => part.trim()).filter(part => part.startsWith(`${name}=`));
+  if (values.length !== 1) return null;
+  const value = values[0].slice(name.length + 1);
+  return opaque.test(value) ? value : null;
+}
+function cookie(config: AuthConfig, kind: 'session' | 'oauth', value: string, seconds: number) {
+  return `${cookieName(config, kind)}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${seconds}${config.secure ? '; Secure' : ''}`;
+}
+function responseRedirect(path: string, cookies: string[] = []): Response {
+  const headers = new Headers(staffAuthHeaders);
+  headers.set('Location', path);
+  for (const value of cookies) headers.append('Set-Cookie', value);
+  return new Response(null, { status: 303, headers });
+}
+export function authFailure(code: AuthErrorCode): Response {
+  return responseRedirect(`/control/login?error=${code}`);
+}
+
+export async function beginDiscordLogin(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<Response> {
+  const config = authConfiguration(env, development);
+  if (request.method !== 'POST') throw new AuthError('csrf');
+  checkMutationOrigin(request, config);
+  const state = randomToken();
+  const browser = randomToken();
+  const verifier = randomToken();
+  const previous = readCookie(request, cookieName(config, 'oauth'));
+  await config.db.batch([
+    config.db.prepare('DELETE FROM staff_oauth_transactions WHERE expires_at <= ? OR browser_hash = ?').bind(now, previous ? await hashToken(previous) : ''),
+    config.db.prepare('INSERT INTO staff_oauth_transactions(state_hash,browser_hash,verifier,created_at,expires_at) VALUES (?,?,?,?,?)')
+      .bind(await hashToken(state), await hashToken(browser), verifier, now, now + OAUTH_MS),
+  ]);
+  const destination = new URL('https://discord.com/oauth2/authorize');
+  destination.search = new URLSearchParams({
+    client_id: config.clientId, redirect_uri: config.callback, response_type: 'code', scope: 'identify',
+    state, code_challenge: await pkceChallenge(verifier), code_challenge_method: 'S256',
+  }).toString();
+  return responseRedirect(destination.href, [cookie(config, 'oauth', browser, OAUTH_MS / 1000)]);
+}
+
+async function providerJson(response: Response): Promise<Record<string, unknown>> {
+  if (!response.ok) throw new AuthError('failed');
+  const text = await response.text();
+  if (text.length > 65536) throw new AuthError('failed');
+  let value: unknown;
+  try { value = JSON.parse(text); } catch { throw new AuthError('failed'); }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new AuthError('failed');
+  return value as Record<string, unknown>;
+}
+async function bootstrapOwner(env: AuthEnvironment, id: string, now: number) {
+  if (env.INITIAL_OWNER_DISCORD_ID !== id) return;
+  const db = env.CONTENT_DB!;
+  await db.batch([
+    db.prepare(`INSERT INTO staff_accounts(discord_user_id,role,created_at,updated_at)
+      SELECT ?, 'Owner', ?, ? WHERE NOT EXISTS(SELECT 1 FROM staff_bootstrap)
+      AND NOT EXISTS(SELECT 1 FROM staff_accounts) ON CONFLICT(discord_user_id) DO NOTHING`).bind(id, now, now),
+    db.prepare(`INSERT INTO staff_bootstrap(singleton,initial_owner_id,created_at)
+      SELECT 1,discord_user_id,? FROM staff_accounts WHERE discord_user_id=? AND role='Owner'
+      ON CONFLICT(singleton) DO NOTHING`).bind(now, id),
+  ]);
+}
+
+export async function finishDiscordLogin(request: Request, env: AuthEnvironment, development = false, fetcher: typeof fetch = fetch, now = Date.now()): Promise<Response> {
+  const config = authConfiguration(env, development);
+  const clear = cookie(config, 'oauth', '', 0);
+  let accessToken: string | undefined;
+  try {
+    checkHost(request, config);
+    const params = new URL(request.url).searchParams;
+    if (request.method !== 'GET' || ['state', 'code', 'error'].some(name => params.getAll(name).length > 1)) throw new AuthError('invalid');
+    const state = params.get('state');
+    const browser = readCookie(request, cookieName(config, 'oauth'));
+    if (!state || !opaque.test(state) || !browser) throw new AuthError('invalid');
+    // Atomic consumption before any network call prevents concurrent callback replay.
+    const transaction = await config.db.prepare(`DELETE FROM staff_oauth_transactions
+      WHERE state_hash=? AND browser_hash=? AND expires_at>? RETURNING verifier`)
+      .bind(await hashToken(state), await hashToken(browser), now).first<{ verifier: string }>();
+    if (!transaction) throw new AuthError('invalid');
+    if (params.has('error')) throw new AuthError(params.get('error') === 'access_denied' ? 'cancelled' : 'failed');
+    const code = params.get('code');
+    if (!code || !/^[A-Za-z0-9._~-]{1,2048}$/.test(code)) throw new AuthError('failed');
+    const token = await providerJson(await fetcher('https://discord.com/api/oauth2/token', {
+      method: 'POST', redirect: 'error', signal: AbortSignal.timeout(8000),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret,
+        grant_type: 'authorization_code', code, redirect_uri: config.callback, code_verifier: transaction.verifier }),
+    }));
+    if (typeof token.access_token !== 'string' || !/^[A-Za-z0-9._~-]{16,2048}$/.test(token.access_token)) throw new AuthError('failed');
+    accessToken = token.access_token;
+    if (typeof token.token_type !== 'string' || token.token_type.toLowerCase() !== 'bearer' ||
+        token.scope !== 'identify' || !Number.isSafeInteger(token.expires_in) || Number(token.expires_in) <= 0) throw new AuthError('failed');
+    const user = await providerJson(await fetcher('https://discord.com/api/v10/users/@me', {
+      headers: { Authorization: `Bearer ${accessToken}` }, redirect: 'error', signal: AbortSignal.timeout(8000),
+    }));
+    if (typeof user.id !== 'string' || !snowflake.test(user.id) || user.bot === true ||
+        typeof user.username !== 'string' || !user.username.trim() || user.username.length > 80 ||
+        (user.global_name !== null && user.global_name !== undefined && (typeof user.global_name !== 'string' || user.global_name.length > 80))) throw new AuthError('failed');
+    await bootstrapOwner(env, user.id, now);
+    const rawSession = randomToken();
+    const sessionHash = await hashToken(rawSession);
+    const expires = now + SESSION_MS;
+    // Authorization and session insertion occur in one statement; no stale allowlist window.
+    const inserted = await config.db.prepare(`INSERT INTO staff_sessions(token_hash,discord_user_id,access_version,username,display_name,created_at,expires_at)
+      SELECT ?,discord_user_id,access_version,?,?,?,? FROM staff_accounts WHERE discord_user_id=? AND active=1 RETURNING token_hash`)
+      .bind(sessionHash, user.username, typeof user.global_name === 'string' && user.global_name ? user.global_name : user.username, now, expires, user.id).first();
+    if (!inserted) throw new AuthError('denied');
+    // Rotate any existing browser session rather than reusing it across logins.
+    const previous = readCookie(request, cookieName(config, 'session'));
+    if (previous) await config.db.prepare('DELETE FROM staff_sessions WHERE token_hash=?').bind(await hashToken(previous)).run();
+    return responseRedirect('/control', [clear, cookie(config, 'session', rawSession, SESSION_MS / 1000)]);
+  } catch (error) {
+    const code = error instanceof AuthError ? error.code : 'failed';
+    return responseRedirect(`/control/login?error=${code}`, [clear]);
+  } finally {
+    // No token persistence/refresh. Revoke after identity lookup, even for denied users.
+    if (accessToken) {
+      try {
+        await fetcher('https://discord.com/api/oauth2/token/revoke', {
+          method: 'POST', redirect: 'error', signal: AbortSignal.timeout(4000),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret, token: accessToken, token_type_hint: 'access_token' }),
+        });
+      } catch { /* Best effort; never emit provider responses or credentials. */ }
+    }
+  }
+}
+
+export type StaffSession = {
+  token_hash: string; discord_user_id: string; role: StaffRole; username: string; display_name: string;
+};
+export async function currentStaffSession(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<StaffSession | null> {
+  const config = authConfiguration(env, development);
+  checkHost(request, config);
+  const raw = readCookie(request, cookieName(config, 'session'));
+  if (!raw) return null;
+  return config.db.prepare(`SELECT s.token_hash,s.discord_user_id,s.username,s.display_name,a.role
+    FROM staff_sessions s JOIN staff_accounts a ON a.discord_user_id=s.discord_user_id
+    WHERE s.token_hash=? AND s.expires_at>? AND s.revoked_at IS NULL AND a.active=1 AND s.access_version=a.access_version`)
+    .bind(await hashToken(raw), now).first<StaffSession>();
+}
+export async function requireStaff(request: Request, env: AuthEnvironment, minimum: StaffRole = 'Moderator', development = false, now = Date.now()): Promise<StaffSession> {
+  const session = await currentStaffSession(request, env, development, now);
+  if (!session) throw new AuthError('denied');
+  if (!permitsRole(session.role, minimum)) throw new AuthError('denied');
+  return session;
+}
+export async function staffCsrfToken(session: StaffSession, env: AuthEnvironment): Promise<string> {
+  if (!env.AUTH_CSRF_SECRET || env.AUTH_CSRF_SECRET.length < 32) throw new AuthError('unavailable');
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.AUTH_CSRF_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const bytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`staff-action:${session.token_hash}`)));
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+function sameToken(left: string, right: string): boolean {
+  if (!opaque.test(left) || !opaque.test(right)) return false;
+  let difference = 0;
+  for (let index = 0; index < 64; index++) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  return difference === 0;
+}
+export async function requireStaffAction(request: Request, env: AuthEnvironment, minimum: StaffRole = 'Moderator', development = false, now = Date.now()): Promise<StaffSession> {
+  const config = authConfiguration(env, development);
+  checkMutationOrigin(request, config);
+  const session = await requireStaff(request, env, minimum, development, now);
+  let provided = request.headers.get('X-CSRF-Token');
+  if (!provided) {
+    if (!request.headers.get('Content-Type')?.startsWith('application/x-www-form-urlencoded')) throw new AuthError('csrf');
+    const text = await request.clone().text();
+    if (text.length > 16384) throw new AuthError('csrf');
+    const params = new URLSearchParams(text);
+    if (params.getAll('_csrf').length !== 1) throw new AuthError('csrf');
+    provided = params.get('_csrf');
+  }
+  if (!provided || !sameToken(provided, await staffCsrfToken(session, env))) throw new AuthError('csrf');
+  return session;
+}
+export async function logoutStaff(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<Response> {
+  const config = authConfiguration(env, development);
+  if (request.method !== 'POST') throw new AuthError('csrf');
+  checkMutationOrigin(request, config);
+  const current = await currentStaffSession(request, env, development, now);
+  const statements: D1PreparedStatement[] = [];
+  if (current) {
+    const session = await requireStaffAction(request, env, 'Moderator', development, now);
+    statements.push(config.db.prepare('DELETE FROM staff_sessions WHERE token_hash=?').bind(session.token_hash));
+  } else {
+    // Idempotent logout of expired/revoked credentials cannot grant access.
+    const raw = readCookie(request, cookieName(config, 'session'));
+    if (raw) statements.push(config.db.prepare('DELETE FROM staff_sessions WHERE token_hash=?').bind(await hashToken(raw)));
+  }
+  const pending = readCookie(request, cookieName(config, 'oauth'));
+  if (pending) statements.push(config.db.prepare('DELETE FROM staff_oauth_transactions WHERE browser_hash=?').bind(await hashToken(pending)));
+  if (statements.length) await config.db.batch(statements);
+  return responseRedirect('/control/login', [cookie(config, 'session', '', 0), cookie(config, 'oauth', '', 0)]);
+}

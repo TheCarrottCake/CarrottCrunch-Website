@@ -12,4 +12,9 @@ export default [
     route("safety", "routes/safety.tsx"),
   ]),
   route("join", "routes/join.tsx"),
+  route("control", "routes/control.tsx"),
+  route("control/login", "routes/control-login.tsx"),
+  route("control/auth/start", "routes/control-auth-start.ts"),
+  route("control/auth/callback", "routes/control-auth-callback.ts"),
+  route("control/logout", "routes/control-logout.ts"),
 ] satisfies RouteConfig;

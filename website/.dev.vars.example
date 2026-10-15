@@ -1,0 +1,8 @@
+# Example only. Copy/merge into ignored .dev.vars.content_dev, then supply real values.
+# Never use VITE_ prefixes for authentication configuration or secrets.
+DISCORD_CLIENT_ID=""
+DISCORD_CLIENT_SECRET=""
+CONTROL_ORIGIN="http://localhost:5173"
+AUTH_CSRF_SECRET=""
+# Optional ONE-TIME bootstrap. Set to the intended Owner's exact Discord user ID.
+# INITIAL_OWNER_DISCORD_ID=""

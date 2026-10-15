@@ -11,7 +11,8 @@
 		"VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare"
 	},
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"logs": { "enabled": true, "invocation_logs": false }
 	},
 	"upload_source_maps": true,
 	// Local content development only. No production D1 binding or remote database.

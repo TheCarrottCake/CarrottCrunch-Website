@@ -68,3 +68,11 @@
 .content-body code{background:#ffffff0a;padding:2px 5px;border-radius:4px}
 .route-status:not(:empty){position:fixed;bottom:20px;left:20px;z-index:10;background:#1a1c20;border:1px solid var(--orange);padding:12px 20px;border-radius:8px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Crunch Control retains the public brand while keeping staff pages separate. */
+.control-brand{padding-top:32px}.control-page{max-width:760px;padding-top:56px;padding-bottom:64px;display:flex;flex-direction:column;align-items:flex-start;gap:24px}
+.control-page h1{margin:0;font-size:clamp(38px,6vw,62px)}.control-page>p{line-height:1.8;max-width:64ch}
+.control-page .content-notice{margin:0}.control-identity{width:100%;border:1px solid var(--line);border-radius:10px;padding:24px;margin:0}
+.control-identity>div{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:12px 0}.control-identity dt{color:var(--muted)}.control-identity dd{margin:0;overflow-wrap:anywhere}
+.control-page .button:disabled{opacity:.55}.control-page>.text-link{margin-top:16px;text-decoration:underline;text-underline-offset:4px}
+@media(max-width:760px){.control-page{padding-top:36px}.control-brand{padding-top:24px}}
