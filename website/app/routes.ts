@@ -3,6 +3,7 @@ import { type RouteConfig, index, layout, route } from "@react-router/dev/routes
 export default [
   layout("routes/public-layout.tsx", [
     index("routes/home.tsx"),
+    route("account", "routes/account.tsx"),
     route("community", "routes/community.tsx"),
     route("servers", "routes/servers.tsx"),
     route("gallery", "routes/gallery.tsx"),
@@ -12,6 +13,9 @@ export default [
     route("safety", "routes/safety.tsx"),
   ]),
   route("join", "routes/join.tsx"),
+  route("login", "routes/login.tsx"),
+  route("auth/start", "routes/auth-start.ts"),
+  route("logout", "routes/logout.ts"),
   route("control", "routes/control.tsx"),
   route("control/login", "routes/control-login.tsx"),
   route("control/auth/start", "routes/control-auth-start.ts"),

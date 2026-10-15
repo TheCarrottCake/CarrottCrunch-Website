@@ -6,7 +6,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (request.method !== 'POST') return loader();
   try { return await logoutStaff(request, context.get(contentEnvironmentContext), import.meta.env.DEV); }
   catch (error) {
-    return new Response(error instanceof AuthError && error.code === 'csrf' ? 'Request could not be verified. Reload and try again.' : 'Staff access is unavailable. Return to sign-in.', {
+    return new Response(error instanceof AuthError && error.code === 'csrf' ? 'Request could not be verified. Reload and try again.' : 'Sign-out is unavailable. Return to sign-in.', {
       status: error instanceof AuthError && error.code !== 'unavailable' ? 403 : 503, headers: staffAuthHeaders,
     });
   }

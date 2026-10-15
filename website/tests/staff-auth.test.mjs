@@ -4,7 +4,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { getPlatformProxy, unstable_splitSqlQuery as splitSql } from 'wrangler';
 import {
   AuthError, authConfiguration, beginDiscordLogin, finishDiscordLogin, currentStaffSession,
-  requireStaff, requireStaffAction, staffCsrfToken, logoutStaff, permitsRole, hashToken,
+  currentSiteSession, requireSiteUser, requireSiteAction, requireStaff, requireStaffAction, staffCsrfToken, logoutStaff, permitsRole, hashToken,
 } from '../app/lib/staff-auth.server.ts';
 
 // Fictional identities/credentials only. No live Discord requests.
@@ -72,10 +72,10 @@ test('OAuth uses identify, S256 PKCE, browser binding, atomic state consumption 
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(stored.verifier));
   assert.equal(Buffer.from(digest).toString('base64url'), attempt.url.searchParams.get('code_challenge'));
   const wrong = await finishDiscordLogin(new Request(callback(attempt).url, { headers: { Cookie: '__Host-cc_oauth=' + 'a'.repeat(64) } }), env, false, provider().fetcher, now);
-  assert.equal(wrong.headers.get('Location'), '/control/login?error=invalid');
+  assert.equal(wrong.headers.get('Location'), '/login?error=invalid');
   const mock = provider();
   const results = await Promise.all([finishDiscordLogin(callback(attempt), env, false, mock.fetcher, now), finishDiscordLogin(callback(attempt), env, false, mock.fetcher, now)]);
-  assert.deepEqual(results.map(result => result.headers.get('Location')).sort(), ['/control', '/control/login?error=invalid'].sort());
+  assert.deepEqual(results.map(result => result.headers.get('Location')).sort(), ['/control', '/login?error=invalid'].sort());
   assert.equal(mock.calls.filter(call => call.input.endsWith('/token')).length, 1);
   assert.equal(new URLSearchParams(mock.calls[0].init.body).get('code_verifier'), stored.verifier);
   assert.equal(new URLSearchParams(mock.calls[0].init.body).get('client_secret'), env.DISCORD_CLIENT_SECRET);
@@ -92,7 +92,10 @@ test('OAuth uses identify, S256 PKCE, browser binding, atomic state consumption 
 
 test('explicit staff identity/role boundaries and one-time Owner bootstrap', async t => {
   const { env, db } = await setup(t);
-  assert.equal((await signIn(env, outsider)).response.headers.get('Location'), '/control/login?error=denied');
+  const member = await signIn(env, outsider);
+  assert.equal(member.response.headers.get('Location'), '/account');
+  assert.ok(await requireSiteUser(sessionRequest(member.cookie), env, false, now));
+  await assert.rejects(requireStaff(sessionRequest(member.cookie), env, 'Moderator', false, now), errorCode('denied'));
   assert.equal((await db.prepare('SELECT count(*) AS n FROM staff_accounts').first()).n, 0);
   await signIn(env);
   assert.equal((await db.prepare('SELECT count(*) AS n FROM staff_bootstrap').first()).n, 1);
@@ -106,12 +109,14 @@ test('explicit staff identity/role boundaries and one-time Owner bootstrap', asy
     }
   }
   const denied = await signIn(env, outsider);
-  assert.doesNotMatch(denied.cookie, /cc_session/);
+  assert.equal(denied.response.headers.get('Location'), '/account');
+  await assert.rejects(requireStaff(sessionRequest(denied.cookie), env, 'Moderator', false, now), errorCode('denied'));
   await db.prepare('UPDATE staff_accounts SET active=0 WHERE discord_user_id=?').bind(owner).run();
-  assert.equal((await signIn(env)).response.headers.get('Location'), '/control/login?error=denied');
+  assert.equal((await signIn(env)).response.headers.get('Location'), '/account');
   await db.prepare('DELETE FROM staff_accounts WHERE discord_user_id=?').bind(owner).run();
-  assert.equal((await signIn(env)).response.headers.get('Location'), '/control/login?error=denied');
-  assert.equal((await signIn({ ...env, INITIAL_OWNER_DISCORD_ID: outsider }, outsider)).response.headers.get('Location'), '/control/login?error=denied');
+  assert.equal((await signIn(env)).response.headers.get('Location'), '/account');
+  assert.equal((await signIn({ ...env, INITIAL_OWNER_DISCORD_ID: outsider }, outsider)).response.headers.get('Location'), '/account');
+  assert.equal(await db.prepare('SELECT * FROM staff_accounts WHERE discord_user_id=?').bind(outsider).first(), null);
 });
 
 test('expired/revoked sessions, role changes, and disable/re-enable cannot retain access', async t => {
@@ -119,7 +124,7 @@ test('expired/revoked sessions, role changes, and disable/re-enable cannot retai
   const first = await signIn(env, moderator), request = sessionRequest(first.cookie);
   assert.ok(await currentStaffSession(request, env, false, now + 8 * 3600000 - 1));
   assert.equal(await currentStaffSession(request, env, false, now + 8 * 3600000), null);
-  await db.prepare('UPDATE staff_sessions SET revoked_at=? WHERE discord_user_id=?').bind(now, moderator).run();
+  await db.prepare('UPDATE site_sessions SET revoked_at=? WHERE discord_user_id=?').bind(now, moderator).run();
   assert.equal(await currentStaffSession(request, env, false, now), null);
   const active = await signIn(env, moderator);
   await db.prepare('UPDATE staff_accounts SET active=0 WHERE discord_user_id=?').bind(moderator).run();
@@ -146,9 +151,9 @@ test('session-bound CSRF and same-origin logout invalidate sessions', async t =>
   const pending = await start(env);
   const result = await logoutStaff(post('/control/logout', signed.cookie + '; ' + pending.cookie, `_csrf=${csrf}`), env, false, now);
   const cancelledProvider = provider();
-  assert.equal((await finishDiscordLogin(callback(pending), env, false, cancelledProvider.fetcher, now)).headers.get('Location'), '/control/login?error=invalid');
+  assert.equal((await finishDiscordLogin(callback(pending), env, false, cancelledProvider.fetcher, now)).headers.get('Location'), '/login?error=invalid');
   assert.equal(cancelledProvider.calls.length, 0);
-  assert.equal(result.headers.get('Location'), '/control/login');
+  assert.equal(result.headers.get('Location'), '/login');
   assert.match(result.headers.get('Set-Cookie'), /Max-Age=0/);
   assert.equal(await currentStaffSession(sessionRequest(signed.cookie), env, false, now), null);
   assert.equal((await logoutStaff(post('/control/logout', signed.cookie), env, false, now)).status, 303);
@@ -161,12 +166,12 @@ test('invalid/expired OAuth state, consent cancellation, and callback failures d
     new Request(origin + '/control/auth/callback?state=' + 'b'.repeat(64), { headers: { Cookie: attempt.cookie } }),
     callback(attempt, 'state=duplicate&code=test-code'),
     new Request(callback(attempt).url.replace(origin, 'https://evil.example'), { headers: { Cookie: attempt.cookie } }),
-  ]) assert.equal((await finishDiscordLogin(request, env, false, mock.fetcher, now)).headers.get('Location'), '/control/login?error=invalid');
-  assert.equal((await finishDiscordLogin(callback(attempt), env, false, mock.fetcher, now + 600000)).headers.get('Location'), '/control/login?error=invalid');
+  ]) assert.equal((await finishDiscordLogin(request, env, false, mock.fetcher, now)).headers.get('Location'), '/login?error=invalid');
+  assert.equal((await finishDiscordLogin(callback(attempt), env, false, mock.fetcher, now + 600000)).headers.get('Location'), '/login?error=invalid');
   const cancelledAttempt = await start(env);
   const cancelled = await finishDiscordLogin(callback(cancelledAttempt, 'error=access_denied&error_description=PRIVATE_PROVIDER_ERROR'), env, false, mock.fetcher, now);
-  assert.equal(cancelled.headers.get('Location'), '/control/login?error=cancelled');
-  assert.equal((await finishDiscordLogin(callback(cancelledAttempt), env, false, mock.fetcher, now)).headers.get('Location'), '/control/login?error=invalid');
+  assert.equal(cancelled.headers.get('Location'), '/login?error=cancelled');
+  assert.equal((await finishDiscordLogin(callback(cancelledAttempt), env, false, mock.fetcher, now)).headers.get('Location'), '/login?error=invalid');
   assert.equal(mock.calls.length, 0);
   const broken = [
     async () => { throw new Error('PRIVATE_UPSTREAM_FAILURE'); },
@@ -180,11 +185,11 @@ test('invalid/expired OAuth state, consent cancellation, and callback failures d
   ];
   for (const fetcher of broken) {
     const failed = await finishDiscordLogin(callback(await start(env)), env, false, fetcher, now);
-    assert.equal(failed.headers.get('Location'), '/control/login?error=failed');
+    assert.equal(failed.headers.get('Location'), '/login?error=failed');
     assert.doesNotMatch(JSON.stringify([...failed.headers]), /PRIVATE_|fictional-access|fictional-test-client/);
     assert.doesNotMatch(jar(failed), /cc_session/);
   }
-  assert.equal((await db.prepare('SELECT count(*) AS n FROM staff_sessions').first()).n, 0);
+  assert.equal((await db.prepare('SELECT count(*) AS n FROM site_sessions').first()).n, 0);
   assert.equal((await db.prepare('SELECT count(*) AS n FROM staff_bootstrap').first()).n, 0);
 });
 
@@ -202,4 +207,53 @@ test('new login rotates the old session and ignores redirect manipulation', asyn
   assert.notEqual(jar(result), previous.cookie);
   assert.equal(await currentStaffSession(sessionRequest(previous.cookie), env, false, now), null);
   assert.ok(await currentStaffSession(sessionRequest(jar(result)), env, false, now));
+});
+
+test('ordinary accounts persist only minimal identity and cannot authorize staff actions', async t => {
+  const { env, db } = await setup(t);
+  const avatar = 'a_' + 'a'.repeat(32);
+  const attempt = await start(env);
+  const result = await finishDiscordLogin(callback(attempt), env, false, provider(outsider, { user: { avatar, email: 'private-test@example.invalid', guilds: ['not-staff-authority'] } }).fetcher, now);
+  assert.equal(result.headers.get('Location'), '/account');
+  const cookie = jar(result), request = sessionRequest(cookie);
+  const user = await requireSiteUser(request, env, false, now);
+  assert.equal(user.role, null); assert.equal(user.avatar_ref, avatar);
+  assert.equal((await db.prepare('SELECT count(*) AS n FROM staff_accounts').first()).n, 0);
+  const record = await db.prepare('SELECT * FROM site_users WHERE discord_user_id=?').bind(outsider).first();
+  assert.deepEqual(Object.keys(record).sort(), ['avatar_ref', 'created_at', 'discord_user_id', 'display_name', 'updated_at', 'username']);
+  assert.doesNotMatch(JSON.stringify(record), /private-test@example|not-staff-authority|fictional-access/);
+  const csrf = await staffCsrfToken(user, env);
+  assert.ok(await requireSiteAction(post('/account-action', cookie, `_csrf=${csrf}`), env, false, now));
+  await assert.rejects(requireStaffAction(post('/staff-action', cookie, `_csrf=${csrf}`), env, 'Moderator', false, now), errorCode('denied'));
+  assert.equal(await currentSiteSession(request, env, false, now + 8 * 3600000), null);
+  await assert.rejects(logoutStaff(post('/logout', cookie), env, false, now), errorCode('csrf'));
+  const loggedOut = await logoutStaff(post('/logout', cookie, `_csrf=${csrf}`), env, false, now);
+  assert.equal(loggedOut.headers.get('Location'), '/login');
+  assert.equal(await currentSiteSession(request, env, false, now), null);
+  assert.equal((await db.prepare('SELECT count(*) AS n FROM site_users').first()).n, 1);
+  const again = await start(env);
+  await finishDiscordLogin(callback(again), env, false, provider(outsider, { user: { username: 'renamed_member', global_name: 'Renamed Member', avatar: null } }).fetcher, now + 1);
+  assert.equal((await db.prepare('SELECT count(*) AS n FROM site_users').first()).n, 1);
+  assert.equal((await db.prepare('SELECT username FROM site_users WHERE discord_user_id=?').bind(outsider).first()).username, 'renamed_member');
+  const invalid = await finishDiscordLogin(callback(await start(env)), env, false, provider(outsider, { user: { avatar: 'https://evil.example/image' } }).fetcher, now);
+  assert.equal(invalid.headers.get('Location'), '/login?error=failed');
+});
+
+test('unified migration preserves existing staff and bootstrap but invalidates legacy sessions', async t => {
+  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: [] });
+  t.after(() => proxy.dispose());
+  const db = proxy.env.CONTENT_DB;
+  const files = (await readdir('migrations')).filter(name => name.endsWith('.sql')).sort();
+  for (const name of files.filter(name => name < '0005')) await db.batch(splitSql(await readFile(`migrations/${name}`, 'utf8')).map(sql => db.prepare(sql)));
+  await addStaff(db, owner, 'Owner');
+  await db.prepare('INSERT INTO staff_bootstrap(singleton,initial_owner_id,created_at) VALUES (1,?,?)').bind(owner, now).run();
+  await db.prepare('INSERT INTO staff_sessions(token_hash,discord_user_id,access_version,username,display_name,created_at,expires_at) VALUES (?,?,1,?,?,?,?)')
+    .bind('a'.repeat(64), owner, 'legacy_owner', 'Legacy Owner', now, now + 1000).run();
+  const before = await db.prepare('SELECT * FROM staff_accounts WHERE discord_user_id=?').bind(owner).first();
+  await db.batch(splitSql(await readFile('migrations/0005_unified_accounts.sql', 'utf8')).map(sql => db.prepare(sql)));
+  assert.deepEqual(await db.prepare('SELECT * FROM staff_accounts WHERE discord_user_id=?').bind(owner).first(), before);
+  assert.equal((await db.prepare('SELECT initial_owner_id FROM staff_bootstrap').first()).initial_owner_id, owner);
+  assert.equal((await db.prepare('SELECT count(*) AS n FROM staff_sessions').first()).n, 0);
+  assert.equal((await db.prepare('SELECT count(*) AS n FROM site_users').first()).n, 0);
+  assert.equal((await signIn(environment(db))).response.headers.get('Location'), '/control');
 });

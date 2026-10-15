@@ -116,3 +116,12 @@
  .dashboard-sidebar-actions{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:16px}
 }
 @media(max-width:600px){.dashboard-tool-grid{grid-template-columns:1fr}.dashboard-notice{padding:20px}.dashboard-nav-unavailable{flex-wrap:wrap}}
+
+/* One site-wide account disclosure; Discord community joining stays separate. */
+.account-menu{position:relative}.account-toggle{display:flex;align-items:center;gap:10px;min-height:44px;padding:7px 12px;border:1px solid #505257;border-radius:6px;background:#1a1c20;font-size:14px}
+.account-avatar{border-radius:50%;object-fit:cover;flex-shrink:0}.account-avatar-fallback{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:#f38c3e20;color:var(--orange);font-weight:700}
+.account-menu-panel{position:absolute;top:calc(100% + 8px);right:0;min-width:210px;padding:8px;margin:0;list-style:none;border:1px solid #505257;border-radius:8px;background:#1a1c20;box-shadow:0 12px 30px #0006;z-index:20}
+.account-menu-panel[hidden]{display:none}.account-menu-panel li>a,.account-menu-panel button{display:block;width:100%;padding:12px;border:0;background:transparent;text-align:left;border-radius:4px;font-size:14px;line-height:1.5}
+.account-menu-panel li>a:hover,.account-menu-panel button:hover{background:#f38c3e12;color:var(--orange)}
+.account-page h1{overflow-wrap:anywhere}.account-page .account-avatar{margin:20px 0}.account-page .public-card>p{overflow-wrap:anywhere}
+@media(max-width:1280px){.account-menu{margin-top:12px}.account-toggle{width:100%}.account-menu-panel{position:static;box-shadow:none;margin-top:8px}.account-menu-panel li>a{padding:12px}}

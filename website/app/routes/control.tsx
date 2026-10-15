@@ -1,7 +1,7 @@
 import { data, isRouteErrorResponse, redirect } from 'react-router';
 import type { Route } from './+types/control';
 import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
-import { AuthError, requireStaff, staffCsrfToken, staffAuthHeaders } from '../lib/staff-auth.server';
+import { AuthError, currentSiteSession, requireStaff, staffCsrfToken, staffAuthHeaders } from '../lib/staff-auth.server';
 import { ControlDashboard } from '../components/control-dashboard';
 import { ControlShell } from '../components/control-shell';
 
@@ -15,7 +15,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const session = await requireStaff(request, env, 'Moderator', import.meta.env.DEV);
     return data({ identity: { username: session.username, displayName: session.display_name }, role: session.role, csrf: await staffCsrfToken(session, env) }, { headers: staffAuthHeaders });
   } catch (error) {
-    if (error instanceof AuthError && error.code === 'denied') throw redirect('/control/login', { headers: staffAuthHeaders });
+    if (error instanceof AuthError && error.code === 'denied') {
+      try {
+        if (await currentSiteSession(request, context.get(contentEnvironmentContext), import.meta.env.DEV)) throw new Response('Staff access denied', { status: 403, headers: staffAuthHeaders });
+      } catch (failure) { if (failure instanceof Response) throw failure; }
+      throw redirect('/login', { headers: staffAuthHeaders });
+    }
     throw new Response('Staff access is unavailable', { status: 503, headers: staffAuthHeaders });
   }
 }

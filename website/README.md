@@ -141,3 +141,9 @@ See [configuration, initial Owner bootstrap, Codespaces setup and testing](docs/
 The public header now provides secondary Staff Sign In navigation to `/control`, alongside primary Join Discord. The protected staff landing page has a responsive sidebar/mobile Tools menu, verified name and role, secure Sign Out, and role-specific future tools clearly labelled unavailable. There are no management links or editing operations yet. Authentication/session protections and public content rules are unchanged.
 
 See [dashboard behavior, role visibility, changed files, and validation](docs/staff-dashboard.md). Public pages retain the Staff Sign In label because their loaders do not expose staff authentication state. Desktop/mobile interaction checks use existing component tooling; visual/browser and live Discord checks remain manual.
+
+## Unified Discord accounts (Task 03C)
+
+`/login` now provides one Sign In with Discord flow for ordinary members and staff. `/account` is a basic authenticated account page; the shared header displays a private, server-verified avatar/account disclosure with My Account, Sign Out, and Crunch Control only for authorized staff. Joining Discord stays separate. Site registration grants no staff privileges, and the existing dashboard/role checks are preserved.
+
+See [unified account migration, configuration, privacy, file list and tests](docs/unified-authentication.md). Apply local migration 0005 with `npm run db:migrate:local`; it preserves staff assignments/bootstrap history but requires legacy sessions to sign in again. Existing OAuth credentials and the registered `/control/auth/callback` URI are reused. Earlier staff-only milestone notes are historical; this guide describes the current shared authentication system.

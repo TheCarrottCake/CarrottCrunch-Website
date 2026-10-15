@@ -112,3 +112,7 @@ Protocol references: [Discord OAuth2 and identify scope](https://discord.com/dev
 - `git diff --check`: passed. Temporary HTTP server stopped. No real credentials, staff bootstrap, live provider exchange, production resource operation, push, merge, or deployment was performed.
 
 Requests already executing at the time of revocation can finish; each subsequent protected request revalidates D1. Logout cancels unconsumed OAuth attempts and the current session. Future business mutations must also check authority within their transaction/concurrency design. Live Discord/Codespaces/browser verification remains outstanding as described above.
+
+## Task 03C compatibility update
+
+Authentication is now shared by ordinary members and staff. See [Unified Discord authentication](unified-authentication.md) for the current schema, public `/login` and `/account`, migration-required fresh sign-in, shared site sessions, unchanged Owner bootstrap, and separately enforced staff permissions. The callback URI and existing credentials are retained. The staff-only sign-in descriptions above are historical.

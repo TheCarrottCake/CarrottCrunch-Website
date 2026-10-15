@@ -29,6 +29,7 @@ export function ControlDashboard({ identity, role, csrf }: ControlDashboardProps
           {tools.map(tool => <span key={tool.id} className="dashboard-nav-unavailable" aria-disabled="true"><span>{tool.name}</span><small>Unavailable</small></span>)}
         </nav>
         <div className="dashboard-sidebar-actions">
+          <Link className="text-link" to="/account">My Account</Link>
           <Link className="text-link" to="/">← Public website</Link>
           <Form method="post" action="/control/logout" reloadDocument>
             <input type="hidden" name="_csrf" value={csrf} />

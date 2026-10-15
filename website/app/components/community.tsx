@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { AccountMenu } from "./account-menu";
+import type { AccountView } from "../lib/account-view";
 import { Link, NavLink } from "react-router";
 
 /** Temporary bitten-C brand mark, shared by branding and decorative accents. */
@@ -26,7 +28,7 @@ export function Brand() {
   return <Link className="brand" to="/" aria-label="CarrottCrunch home"><CrunchMark/><span>Carrott<span className="brand-light">Crunch</span><span className="brand-dot">.</span></span></Link>;
 }
 const navigation = [["Community", "/community"], ["Servers", "/servers"], ["Gallery", "/gallery"], ["Updates", "/updates"], ["About", "/about"], ["Safety", "/safety"]];
-export function Header() {
+export function Header({ account = null }: { account?: AccountView | null } = {}) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -38,7 +40,7 @@ export function Header() {
   }, []);
   return <header className={`site-header${scrolled ? " is-scrolled" : ""}`} onKeyDown={event => {
     if (event.key === "Escape" && open) { setOpen(false); toggle.current?.focus(); }
-  }}><div className="header-inner"><Brand/><button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? "Close ✕" : "Menu ☰"}</button><nav id="main-nav" aria-label="Main navigation" className={open ? "nav open" : "nav"}>{navigation.map(([name, id]) => <NavLink key={id} to={id} onClick={() => setOpen(false)}>{name}</NavLink>)}<Link className="nav-staff button secondary" to="/control" onClick={() => setOpen(false)}>Staff Sign In</Link><Link className="nav-join button primary" to="/join" onClick={() => setOpen(false)}>Join Discord <span aria-hidden="true">↗</span></Link></nav></div></header>;
+  }}><div className="header-inner"><Brand/><button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? "Close ✕" : "Menu ☰"}</button><nav id="main-nav" aria-label="Main navigation" className={open ? "nav open" : "nav"}>{navigation.map(([name, id]) => <NavLink key={id} to={id} onClick={() => setOpen(false)}>{name}</NavLink>)}{account ? <AccountMenu account={account} onNavigate={() => setOpen(false)} /> : <Link className="nav-staff button secondary" to="/login" onClick={() => setOpen(false)}>Sign In</Link>}<Link className="nav-join button primary" to="/join" onClick={() => setOpen(false)}>Join Discord <span aria-hidden="true">↗</span></Link></nav></div></header>;
 }
 type ShowcaseSlide = { label: string; title: string; text: string; theme: string; image: string };
 const slides: ShowcaseSlide[] = [

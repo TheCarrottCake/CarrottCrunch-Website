@@ -68,3 +68,7 @@ No deployment, remote resource creation, domain/DNS change, push, merge, or Cont
 ### Recorded Task 03B results
 
 All **23 tests** passed, including header/dashboard interaction checks, role visibility, unauthorized Discord accounts, session and logout security, News & Events, and invitation validation. `npm run typecheck`, `npm run build`, `node --experimental-strip-types tests/control-build.mjs`, and `git diff --check` passed. The protected loader and logout handler were preserved. Browser viewport/rendering and live Discord checks remain manual; no browser runtime is installed in this workspace.
+
+## Task 03C navigation update
+
+The public header now uses unified Sign In and a server-verified account disclosure. Ordinary members can sign in but cannot enter Crunch Control; authorized staff use the same flow. Dashboard tools/roles are unchanged. See [Unified Discord authentication](unified-authentication.md). The earlier Staff Sign In label notes are historical.

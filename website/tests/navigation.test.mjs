@@ -21,7 +21,7 @@ async function harness(file, name, props = {}) {
   const imports = {
     react, 'react/jsx-runtime': jsxRuntime,
     'react-router': { Link: 'router-link', NavLink: 'router-nav-link', Form: 'router-form' },
-    './community': { Brand: 'brand' }, '../lib/dashboard-tools': { dashboardTools },
+    './community': { Brand: 'brand' }, './account-menu': { AccountMenu: 'account-menu' }, '../lib/dashboard-tools': { dashboardTools },
   };
   const module = { exports: {} };
   const source = await readFile(file, 'utf8');
@@ -44,14 +44,14 @@ test('public desktop/mobile header links preserve Discord joining and close the 
   let tree = render();
   const toggle = () => one(tree, node => node.props?.['aria-controls'] === 'main-nav');
   assert.equal(toggle().props['aria-expanded'], false);
-  const staff = one(tree, node => node.props?.to === '/control');
-  assert.equal(staff.props.children, 'Staff Sign In');
+  const staff = one(tree, node => node.props?.to === '/login');
+  assert.equal(staff.props.children, 'Sign In');
   assert.match(staff.props.className, /secondary/);
   assert.match(one(tree, node => node.props?.to === '/join').props.className, /primary/);
   toggle().props.onClick(); tree = render();
   assert.equal(toggle().props['aria-expanded'], true);
   assert.match(one(tree, node => node.props?.id === 'main-nav').props.className, /open/);
-  one(tree, node => node.props?.to === '/control').props.onClick(); tree = render();
+  one(tree, node => node.props?.to === '/login').props.onClick(); tree = render();
   assert.equal(toggle().props['aria-expanded'], false);
   toggle().props.onClick(); tree = render();
   let focused = false;
@@ -90,5 +90,33 @@ test('dashboard role navigation, mobile toggle/Escape, and CSRF logout remain in
     toggle().props.ref.current = { focus() { focused = true; } };
     one(tree, node => node.type === 'aside').props.onKeyDown({ key: 'Escape' }); tree = render();
     assert.equal(toggle().props['aria-expanded'], false); assert.equal(focused, true);
+  }
+});
+
+test('member/staff account disclosure supports keyboard, avatar fallback and secure logout', async () => {
+  for (const staff of [false, true]) {
+    const render = await harness('app/components/account-menu.tsx', 'AccountMenu', {
+      account: { username: 'fictional_member', displayName: 'Fictional Member', avatarUrl: 'https://cdn.discordapp.com/avatars/100000000000000001/' + 'a'.repeat(32) + '.png', canAccessControl: staff, csrf: 'fictional-csrf' },
+      onNavigate() {},
+    });
+    let tree = render();
+    const toggle = () => one(tree, node => node.props?.['aria-controls'] === 'site-account-menu');
+    assert.equal(toggle().props['aria-expanded'], false);
+    assert.match(toggle().props['aria-label'], /Fictional Member/);
+    const img = one(tree, node => node.type === 'img');
+    assert.equal(img.props.alt, ''); img.props.onError(); tree = render();
+    assert.equal(nodes(tree, node => node.type === 'img').length, 0);
+    toggle().props.onKeyDown({ key: 'ArrowDown', preventDefault() {} }); tree = render();
+    assert.equal(toggle().props['aria-expanded'], true);
+    assert.equal(one(tree, node => node.props?.id === 'site-account-menu').props.hidden, false);
+    assert.equal(nodes(tree, node => node.props?.to === '/control').length, staff ? 1 : 0);
+    assert.equal(one(tree, node => node.props?.action === '/logout').props.method, 'post');
+    assert.equal(one(tree, node => node.props?.name === '_csrf').props.value, 'fictional-csrf');
+    let focused = false; toggle().props.ref.current = { focus() { focused = true; } };
+    tree.props.onKeyDown({ key: 'Escape', stopPropagation() {} }); tree = render();
+    assert.equal(toggle().props['aria-expanded'], false); assert.equal(focused, true);
+    toggle().props.onClick(); tree = render();
+    one(tree, node => node.props?.to === '/account').props.onClick(); tree = render();
+    assert.equal(toggle().props['aria-expanded'], false);
   }
 });

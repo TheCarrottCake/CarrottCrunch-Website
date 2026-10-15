@@ -11,7 +11,7 @@ export type AuthEnvironment = {
 export type AuthErrorCode = 'unavailable' | 'invalid' | 'cancelled' | 'denied' | 'failed' | 'csrf';
 export class AuthError extends Error {
   readonly code: AuthErrorCode;
-  constructor(code: AuthErrorCode) { super('Staff authentication request could not be completed'); this.code = code; }
+  constructor(code: AuthErrorCode) { super('Authentication request could not be completed'); this.code = code; }
 }
 export const staffAuthHeaders = {
   'Cache-Control': 'no-store',
@@ -81,7 +81,7 @@ function responseRedirect(path: string, cookies: string[] = []): Response {
   return new Response(null, { status: 303, headers });
 }
 export function authFailure(code: AuthErrorCode): Response {
-  return responseRedirect(`/control/login?error=${code}`);
+  return responseRedirect(`/login?error=${code}`);
 }
 
 export async function beginDiscordLogin(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<Response> {
@@ -161,23 +161,28 @@ export async function finishDiscordLogin(request: Request, env: AuthEnvironment,
     }));
     if (typeof user.id !== 'string' || !snowflake.test(user.id) || user.bot === true ||
         typeof user.username !== 'string' || !user.username.trim() || user.username.length > 80 ||
-        (user.global_name !== null && user.global_name !== undefined && (typeof user.global_name !== 'string' || user.global_name.length > 80))) throw new AuthError('failed');
+        (user.global_name !== null && user.global_name !== undefined && (typeof user.global_name !== 'string' || user.global_name.length > 80)) ||
+        (user.avatar !== null && user.avatar !== undefined && (typeof user.avatar !== 'string' || !/^(?:a_)?[a-f0-9]{32}$/.test(user.avatar)))) throw new AuthError('failed');
     await bootstrapOwner(env, user.id, now);
     const rawSession = randomToken();
     const sessionHash = await hashToken(rawSession);
     const expires = now + SESSION_MS;
-    // Authorization and session insertion occur in one statement; no stale allowlist window.
-    const inserted = await config.db.prepare(`INSERT INTO staff_sessions(token_hash,discord_user_id,access_version,username,display_name,created_at,expires_at)
-      SELECT ?,discord_user_id,access_version,?,?,?,? FROM staff_accounts WHERE discord_user_id=? AND active=1 RETURNING token_hash`)
-      .bind(sessionHash, user.username, typeof user.global_name === 'string' && user.global_name ? user.global_name : user.username, now, expires, user.id).first();
-    if (!inserted) throw new AuthError('denied');
-    // Rotate any existing browser session rather than reusing it across logins.
     const previous = readCookie(request, cookieName(config, 'session'));
-    if (previous) await config.db.prepare('DELETE FROM staff_sessions WHERE token_hash=?').bind(await hashToken(previous)).run();
-    return responseRedirect('/control', [clear, cookie(config, 'session', rawSession, SESSION_MS / 1000)]);
+    await config.db.batch([
+      config.db.prepare(`INSERT INTO site_users(discord_user_id,username,display_name,avatar_ref,created_at,updated_at)
+        VALUES (?,?,?,?,?,?) ON CONFLICT(discord_user_id) DO UPDATE SET
+        username=excluded.username, display_name=excluded.display_name, avatar_ref=excluded.avatar_ref, updated_at=excluded.updated_at`)
+        .bind(user.id, user.username, typeof user.global_name === 'string' && user.global_name ? user.global_name : user.username,
+          typeof user.avatar === 'string' ? user.avatar : null, now, now),
+      config.db.prepare('INSERT INTO site_sessions(token_hash,discord_user_id,created_at,expires_at) VALUES (?,?,?,?)')
+        .bind(sessionHash, user.id, now, expires),
+      config.db.prepare('DELETE FROM site_sessions WHERE token_hash=?').bind(previous ? await hashToken(previous) : ''),
+    ]);
+    const staff = await config.db.prepare('SELECT role FROM staff_accounts WHERE discord_user_id=? AND active=1').bind(user.id).first();
+    return responseRedirect(staff ? '/control' : '/account', [clear, cookie(config, 'session', rawSession, SESSION_MS / 1000)]);
   } catch (error) {
     const code = error instanceof AuthError ? error.code : 'failed';
-    return responseRedirect(`/control/login?error=${code}`, [clear]);
+    return responseRedirect(`/login?error=${code}`, [clear]);
   } finally {
     // No token persistence/refresh. Revoke after identity lookup, even for denied users.
     if (accessToken) {
@@ -192,18 +197,37 @@ export async function finishDiscordLogin(request: Request, env: AuthEnvironment,
   }
 }
 
-export type StaffSession = {
-  token_hash: string; discord_user_id: string; role: StaffRole; username: string; display_name: string;
+export type SiteSession = {
+  token_hash: string; discord_user_id: string; role: StaffRole | null; username: string; display_name: string; avatar_ref: string | null;
 };
-export async function currentStaffSession(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<StaffSession | null> {
+export type StaffSession = SiteSession & { role: StaffRole };
+export async function currentSiteSession(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<SiteSession | null> {
   const config = authConfiguration(env, development);
   checkHost(request, config);
   const raw = readCookie(request, cookieName(config, 'session'));
   if (!raw) return null;
-  return config.db.prepare(`SELECT s.token_hash,s.discord_user_id,s.username,s.display_name,a.role
-    FROM staff_sessions s JOIN staff_accounts a ON a.discord_user_id=s.discord_user_id
-    WHERE s.token_hash=? AND s.expires_at>? AND s.revoked_at IS NULL AND a.active=1 AND s.access_version=a.access_version`)
-    .bind(await hashToken(raw), now).first<StaffSession>();
+  return config.db.prepare(`SELECT s.token_hash,u.discord_user_id,u.username,u.display_name,u.avatar_ref,
+    CASE WHEN a.active=1 THEN a.role ELSE NULL END AS role
+    FROM site_sessions s JOIN site_users u ON u.discord_user_id=s.discord_user_id
+    LEFT JOIN staff_accounts a ON a.discord_user_id=u.discord_user_id
+    WHERE s.token_hash=? AND s.expires_at>? AND s.revoked_at IS NULL`)
+    .bind(await hashToken(raw), now).first<SiteSession>();
+}
+export async function requireSiteUser(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<SiteSession> {
+  const session = await currentSiteSession(request, env, development, now);
+  if (!session) throw new AuthError('denied');
+  return session;
+}
+export async function currentStaffSession(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<StaffSession | null> {
+  const session = await currentSiteSession(request, env, development, now);
+  return session?.role ? session as StaffSession : null;
+}
+export function accountPresentation(session: SiteSession) {
+  return {
+    username: session.username, displayName: session.display_name,
+    avatarUrl: session.avatar_ref ? `https://cdn.discordapp.com/avatars/${session.discord_user_id}/${session.avatar_ref}.png?size=64` : null,
+    canAccessControl: session.role !== null,
+  };
 }
 export async function requireStaff(request: Request, env: AuthEnvironment, minimum: StaffRole = 'Moderator', development = false, now = Date.now()): Promise<StaffSession> {
   const session = await currentStaffSession(request, env, development, now);
@@ -211,7 +235,7 @@ export async function requireStaff(request: Request, env: AuthEnvironment, minim
   if (!permitsRole(session.role, minimum)) throw new AuthError('denied');
   return session;
 }
-export async function staffCsrfToken(session: StaffSession, env: AuthEnvironment): Promise<string> {
+export async function staffCsrfToken(session: Pick<SiteSession, 'token_hash'>, env: AuthEnvironment): Promise<string> {
   if (!env.AUTH_CSRF_SECRET || env.AUTH_CSRF_SECRET.length < 32) throw new AuthError('unavailable');
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.AUTH_CSRF_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const bytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`staff-action:${session.token_hash}`)));
@@ -223,10 +247,10 @@ function sameToken(left: string, right: string): boolean {
   for (let index = 0; index < 64; index++) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
   return difference === 0;
 }
-export async function requireStaffAction(request: Request, env: AuthEnvironment, minimum: StaffRole = 'Moderator', development = false, now = Date.now()): Promise<StaffSession> {
+export async function requireSiteAction(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<SiteSession> {
   const config = authConfiguration(env, development);
   checkMutationOrigin(request, config);
-  const session = await requireStaff(request, env, minimum, development, now);
+  const session = await requireSiteUser(request, env, development, now);
   let provided = request.headers.get('X-CSRF-Token');
   if (!provided) {
     if (!request.headers.get('Content-Type')?.startsWith('application/x-www-form-urlencoded')) throw new AuthError('csrf');
@@ -239,22 +263,30 @@ export async function requireStaffAction(request: Request, env: AuthEnvironment,
   if (!provided || !sameToken(provided, await staffCsrfToken(session, env))) throw new AuthError('csrf');
   return session;
 }
+export async function requireStaffAction(request: Request, env: AuthEnvironment, minimum: StaffRole = 'Moderator', development = false, now = Date.now()): Promise<StaffSession> {
+  const session = await requireSiteAction(request, env, development, now);
+  if (!session.role || !permitsRole(session.role, minimum)) throw new AuthError('denied');
+  return session as StaffSession;
+}
 export async function logoutStaff(request: Request, env: AuthEnvironment, development = false, now = Date.now()): Promise<Response> {
   const config = authConfiguration(env, development);
   if (request.method !== 'POST') throw new AuthError('csrf');
   checkMutationOrigin(request, config);
-  const current = await currentStaffSession(request, env, development, now);
+  const current = await currentSiteSession(request, env, development, now);
   const statements: D1PreparedStatement[] = [];
   if (current) {
-    const session = await requireStaffAction(request, env, 'Moderator', development, now);
-    statements.push(config.db.prepare('DELETE FROM staff_sessions WHERE token_hash=?').bind(session.token_hash));
+    const session = await requireSiteAction(request, env, development, now);
+    statements.push(config.db.prepare('DELETE FROM site_sessions WHERE token_hash=?').bind(session.token_hash));
   } else {
     // Idempotent logout of expired/revoked credentials cannot grant access.
     const raw = readCookie(request, cookieName(config, 'session'));
-    if (raw) statements.push(config.db.prepare('DELETE FROM staff_sessions WHERE token_hash=?').bind(await hashToken(raw)));
+    if (raw) statements.push(config.db.prepare('DELETE FROM site_sessions WHERE token_hash=?').bind(await hashToken(raw)));
   }
   const pending = readCookie(request, cookieName(config, 'oauth'));
   if (pending) statements.push(config.db.prepare('DELETE FROM staff_oauth_transactions WHERE browser_hash=?').bind(await hashToken(pending)));
   if (statements.length) await config.db.batch(statements);
-  return responseRedirect('/control/login', [cookie(config, 'session', '', 0), cookie(config, 'oauth', '', 0)]);
+  return responseRedirect('/login', [cookie(config, 'session', '', 0), cookie(config, 'oauth', '', 0)]);
 }
+
+// Historical exports remain for existing protected routes; these use the same site session.
+export const logoutSite = logoutStaff;
