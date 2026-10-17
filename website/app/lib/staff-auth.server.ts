@@ -15,7 +15,9 @@ export class AuthError extends Error {
 }
 export const staffAuthHeaders = {
   'Cache-Control': 'no-store',
-  'Referrer-Policy': 'no-referrer',
+  // no-referrer makes native form POSTs send Origin: null, failing strict CSRF validation.
+  // Keep same-origin form origins while withholding referrers from external destinations.
+  'Referrer-Policy': 'same-origin',
   'X-Frame-Options': 'DENY',
   'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy': "frame-ancestors 'none'; base-uri 'self'",
@@ -105,8 +107,12 @@ export async function beginDiscordLogin(request: Request, env: AuthEnvironment, 
   return responseRedirect(destination.href, [cookie(config, 'oauth', browser, OAUTH_MS / 1000)]);
 }
 
+function providerResponseFailed(response: Response): boolean {
+  // workerd requires manual redirects. Reject every redirect without reading Location or following it.
+  return response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400) || !response.ok;
+}
 async function providerJson(response: Response): Promise<Record<string, unknown>> {
-  if (!response.ok) throw new AuthError('failed');
+  if (providerResponseFailed(response)) throw new AuthError('failed');
   const text = await response.text();
   if (text.length > 262144) throw new AuthError('failed');
   let value: unknown;
@@ -127,10 +133,31 @@ async function bootstrapOwner(env: AuthEnvironment, id: string, now: number) {
   ]);
 }
 
+type CallbackStage = 'route-context' | 'configuration' | 'callback-validation' | 'oauth-transaction' |
+  'code-exchange' | 'token-validation' | 'user-lookup' | 'owner-bootstrap' | 'account-session' | 'staff-role';
+type CallbackCategory = 'unavailable' | 'invalid-callback' | 'database' | 'invalid-transaction' |
+  'provider-cancelled' | 'provider-error' | 'invalid-code' | 'network' | 'http' | 'invalid-response' | 'internal';
+
+/** Only fixed labels and HTTP status may reach logs. Never pass caught errors or request/provider data. */
+export function reportCallbackFailure(development: boolean, stage: CallbackStage, category: CallbackCategory, status?: number) {
+  if (!development) return;
+  try {
+    console.warn('[auth-callback]', JSON.stringify({ stage, category, ...(status === undefined ? {} : { status }) }));
+  } catch { /* Diagnostics must not change authentication behavior. */ }
+}
+
 export async function finishDiscordLogin(request: Request, env: AuthEnvironment, development = false, fetcher: typeof fetch = fetch, now = Date.now()): Promise<Response> {
-  const config = authConfiguration(env, development);
+  let config: AuthConfig;
+  try { config = authConfiguration(env, development); }
+  catch (error) {
+    reportCallbackFailure(development, 'configuration', 'unavailable');
+    throw error;
+  }
   const clear = cookie(config, 'oauth', '', 0);
   let accessToken: string | undefined;
+  let stage: CallbackStage = 'callback-validation';
+  let category: CallbackCategory = 'invalid-callback';
+  let status: number | undefined;
   try {
     checkHost(request, config);
     const params = new URL(request.url).searchParams;
@@ -139,35 +166,51 @@ export async function finishDiscordLogin(request: Request, env: AuthEnvironment,
     const browser = readCookie(request, cookieName(config, 'oauth'));
     if (!state || !opaque.test(state) || !browser) throw new AuthError('invalid');
     // Atomic consumption before any network call prevents concurrent callback replay.
+    stage = 'oauth-transaction'; category = 'database';
     const transaction = await config.db.prepare(`DELETE FROM staff_oauth_transactions
       WHERE state_hash=? AND browser_hash=? AND expires_at>? RETURNING verifier`)
       .bind(await hashToken(state), await hashToken(browser), now).first<{ verifier: string }>();
+    category = 'invalid-transaction';
     if (!transaction) throw new AuthError('invalid');
+    stage = 'callback-validation';
+    category = params.get('error') === 'access_denied' ? 'provider-cancelled' : 'provider-error';
     if (params.has('error')) throw new AuthError(params.get('error') === 'access_denied' ? 'cancelled' : 'failed');
+    category = 'invalid-code';
     const code = params.get('code');
     if (!code || !/^[A-Za-z0-9._~-]{1,2048}$/.test(code)) throw new AuthError('failed');
-    const token = await providerJson(await fetcher('https://discord.com/api/oauth2/token', {
-      method: 'POST', redirect: 'error', signal: AbortSignal.timeout(8000),
+    stage = 'code-exchange'; category = 'network';
+    const tokenResponse = await fetcher('https://discord.com/api/oauth2/token', {
+      method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret,
         grant_type: 'authorization_code', code, redirect_uri: config.callback, code_verifier: transaction.verifier }),
-    }));
+    });
+    if (providerResponseFailed(tokenResponse)) { category = 'http'; status = tokenResponse.status; throw new AuthError('failed'); }
+    stage = 'token-validation'; category = 'invalid-response';
+    const token = await providerJson(tokenResponse);
     if (typeof token.access_token !== 'string' || !/^[A-Za-z0-9._~-]{16,2048}$/.test(token.access_token)) throw new AuthError('failed');
     accessToken = token.access_token;
     if (typeof token.token_type !== 'string' || token.token_type.toLowerCase() !== 'bearer' ||
         token.scope !== 'identify' || !Number.isSafeInteger(token.expires_in) || Number(token.expires_in) <= 0) throw new AuthError('failed');
-    const user = await providerJson(await fetcher('https://discord.com/api/v10/users/@me', {
-      headers: { Authorization: `Bearer ${accessToken}` }, redirect: 'error', signal: AbortSignal.timeout(8000),
-    }));
+    stage = 'user-lookup'; category = 'network';
+    const userResponse = await fetcher('https://discord.com/api/v10/users/@me', {
+      headers: { Authorization: `Bearer ${accessToken}` }, redirect: 'manual', signal: AbortSignal.timeout(8000),
+    });
+    if (providerResponseFailed(userResponse)) { category = 'http'; status = userResponse.status; throw new AuthError('failed'); }
+    category = 'invalid-response';
+    const user = await providerJson(userResponse);
     if (typeof user.id !== 'string' || !snowflake.test(user.id) || user.bot === true ||
         typeof user.username !== 'string' || !user.username.trim() || user.username.length > 80 ||
         (user.global_name !== null && user.global_name !== undefined && (typeof user.global_name !== 'string' || user.global_name.length > 80)) ||
         (user.avatar !== null && user.avatar !== undefined && (typeof user.avatar !== 'string' || !/^(?:a_)?[a-f0-9]{32}$/.test(user.avatar)))) throw new AuthError('failed');
+    stage = 'owner-bootstrap'; category = 'database';
     await bootstrapOwner(env, user.id, now);
+    stage = 'account-session'; category = 'internal';
     const rawSession = randomToken();
     const sessionHash = await hashToken(rawSession);
     const expires = now + SESSION_MS;
     const previous = readCookie(request, cookieName(config, 'session'));
+    category = 'database';
     await config.db.batch([
       config.db.prepare(`INSERT INTO site_users(discord_user_id,username,display_name,avatar_ref,created_at,updated_at)
         VALUES (?,?,?,?,?,?) ON CONFLICT(discord_user_id) DO UPDATE SET
@@ -178,20 +221,23 @@ export async function finishDiscordLogin(request: Request, env: AuthEnvironment,
         .bind(sessionHash, user.id, now, expires),
       config.db.prepare('DELETE FROM site_sessions WHERE token_hash=?').bind(previous ? await hashToken(previous) : ''),
     ]);
+    stage = 'staff-role';
     const staff = await config.db.prepare('SELECT role FROM staff_accounts WHERE discord_user_id=? AND active=1').bind(user.id).first();
     return responseRedirect(staff ? '/control' : '/account', [clear, cookie(config, 'session', rawSession, SESSION_MS / 1000)]);
   } catch (error) {
+    reportCallbackFailure(development, stage, category, status);
     const code = error instanceof AuthError ? error.code : 'failed';
     return responseRedirect(`/login?error=${code}`, [clear]);
   } finally {
     // No token persistence/refresh. Revoke after identity lookup, even for denied users.
     if (accessToken) {
       try {
-        await fetcher('https://discord.com/api/oauth2/token/revoke', {
-          method: 'POST', redirect: 'error', signal: AbortSignal.timeout(4000),
+        const revoked = await fetcher('https://discord.com/api/oauth2/token/revoke', {
+          method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(4000),
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({ client_id: config.clientId, client_secret: config.clientSecret, token: accessToken, token_type_hint: 'access_token' }),
         });
+        if (providerResponseFailed(revoked)) throw new AuthError('failed');
       } catch { /* Best effort; never emit provider responses or credentials. */ }
     }
   }

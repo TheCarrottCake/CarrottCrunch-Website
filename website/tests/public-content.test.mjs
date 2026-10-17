@@ -13,7 +13,7 @@ const now = 1800000000000;
 const draft = { slug: 'test', title: 'TEST ONLY', bodyText: 'Published text', actorId: 'test-actor' };
 
 test('public content visibility and event ordering on real local D1', async t => {
-  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: [] });
+  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: ['tests/fixtures/empty-env.txt'] });
   t.after(() => proxy.dispose());
   const db = proxy.env.CONTENT_DB;
   for (const name of (await readdir('migrations')).filter(name => name.endsWith('.sql')).sort()) {

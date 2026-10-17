@@ -1,0 +1,1 @@
+# Deliberately empty: tests must not load local .dev.vars or .env secrets.

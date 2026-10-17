@@ -6,13 +6,18 @@ import { resolve } from 'node:path';
 import { getPlatformProxy, unstable_splitSqlQuery as splitSql } from 'wrangler';
 import { beginDiscordLogin, finishDiscordLogin } from '../app/lib/staff-auth.server.ts';
 
-const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: [] });
+const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: ['tests/fixtures/empty-env.txt'] });
 try {
   const db = proxy.env.CONTENT_DB;
   for (const name of (await readdir('migrations')).filter(name => name.endsWith('.sql')).sort()) await db.batch(splitSql(await readFile(`migrations/${name}`, 'utf8')).map(sql => db.prepare(sql)));
   const bundles = (await readdir('build/server/assets')).filter(name => name.startsWith('server-build-') && name.endsWith('.js'));
   assert.equal(bundles.length, 1, 'Run npm run build first');
   const build = await import(pathToFileURL(resolve('build/server/assets', bundles[0])).href);
+  // These documents contain native sign-in/logout or authenticated mutation forms.
+  for (const name of ['login', 'account', 'control', 'control-media', 'control-media-detail']) {
+    const headers = new Headers(build.routes[`routes/${name}`].module.headers());
+    assert.equal(headers.get('Referrer-Policy'), 'same-origin', `${name} form document policy`);
+  }
   const control = build.routes['routes/control'].module;
   const logout = build.routes['routes/control-logout'].module;
   const origin = 'https://staff.example.test';

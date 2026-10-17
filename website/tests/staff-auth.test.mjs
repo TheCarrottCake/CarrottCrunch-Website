@@ -16,7 +16,7 @@ const jar = response => response.headers.getSetCookie().map(value => value.split
 const errorCode = code => error => error instanceof AuthError && error.code === code;
 const sessionRequest = cookie => new Request(origin + '/control', { headers: { Cookie: cookie } });
 async function setup(t) {
-  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: [] });
+  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: ['tests/fixtures/empty-env.txt'] });
   t.after(() => proxy.dispose());
   const db = proxy.env.CONTENT_DB;
   for (const name of (await readdir('migrations')).filter(name => name.endsWith('.sql')).sort()) await db.batch(splitSql(await readFile(`migrations/${name}`, 'utf8')).map(sql => db.prepare(sql)));
@@ -59,6 +59,50 @@ test('staff configuration fails closed and browser mutation origins are enforced
   await assert.rejects(beginDiscordLogin(post('/control/auth/start', '', '', { 'Sec-Fetch-Site': 'cross-site' }), env), errorCode('csrf'));
 });
 
+test('native login POSTs require an exact Origin even with same-origin fetch metadata', async t => {
+  const { env } = await setup(t);
+  for (const base of [origin, 'http://localhost:5173']) {
+    const development = base.startsWith('http:');
+    const config = { ...env, CONTROL_ORIGIN: base };
+    for (const path of ['/auth/start', '/control/auth/start']) {
+      for (const supplied of [null, 'null', 'https://evil.example', base]) {
+        const headers = new Headers({ 'Sec-Fetch-Site': 'same-origin', 'Content-Type': 'application/x-www-form-urlencoded' });
+        if (supplied !== null) headers.set('Origin', supplied);
+        const request = new Request(base + path, { method: 'POST', headers, body: '' });
+        if (supplied !== base) await assert.rejects(beginDiscordLogin(request, config, development, now), errorCode('csrf'));
+        else {
+          const result = await beginDiscordLogin(request, config, development, now);
+          assert.equal(result.status, 303);
+          assert.equal(result.headers.get('Referrer-Policy'), 'same-origin');
+          assert.equal(new URL(result.headers.get('Location')).origin, 'https://discord.com');
+        }
+      }
+    }
+  }
+});
+
+test('logout and authenticated form actions reject opaque or missing origins with valid CSRF', async t => {
+  const { env } = await setup(t);
+  for (const path of ['/logout', '/control/logout']) {
+    const signed = await signIn(env);
+    const session = await requireStaff(sessionRequest(signed.cookie), env, 'Owner', false, now);
+    const csrf = await staffCsrfToken(session, env);
+    for (const supplied of [null, 'null', 'https://evil.example']) {
+      const request = post(path, signed.cookie, `_csrf=${csrf}`, { 'Sec-Fetch-Site': 'same-origin' });
+      if (supplied === null) request.headers.delete('Origin');
+      else request.headers.set('Origin', supplied);
+      await assert.rejects(logoutStaff(request.clone(), env, false, now), errorCode('csrf'));
+      await assert.rejects(requireSiteAction(request.clone(), env, false, now), errorCode('csrf'));
+      await assert.rejects(requireStaffAction(request.clone(), env, 'Owner', false, now), errorCode('csrf'));
+      assert.ok(await currentStaffSession(sessionRequest(signed.cookie), env, false, now));
+    }
+    const result = await logoutStaff(post(path, signed.cookie, `_csrf=${csrf}`, { 'Sec-Fetch-Site': 'same-origin' }), env, false, now);
+    assert.equal(result.status, 303);
+    assert.equal(result.headers.get('Referrer-Policy'), 'same-origin');
+    assert.equal(await currentStaffSession(sessionRequest(signed.cookie), env, false, now), null);
+  }
+});
+
 test('OAuth uses identify, S256 PKCE, browser binding, atomic state consumption and secure cookies', async t => {
   const { env, db } = await setup(t);
   const attempt = await start(env);
@@ -87,7 +131,7 @@ test('OAuth uses identify, S256 PKCE, browser binding, atomic state consumption 
   assert.notEqual(session.token_hash, raw);
   assert.match(success.headers.getSetCookie().find(value => value.startsWith('__Host-cc_session=')), /HttpOnly; SameSite=Lax; Max-Age=28800; Secure/);
   assert.equal(success.headers.get('Cache-Control'), 'no-store');
-  assert.equal(success.headers.get('Referrer-Policy'), 'no-referrer');
+  assert.equal(success.headers.get('Referrer-Policy'), 'same-origin');
 });
 
 test('explicit staff identity/role boundaries and one-time Owner bootstrap', async t => {
@@ -240,7 +284,7 @@ test('ordinary accounts persist only minimal identity and cannot authorize staff
 });
 
 test('unified migration preserves existing staff and bootstrap but invalidates legacy sessions', async t => {
-  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: [] });
+  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: ['tests/fixtures/empty-env.txt'] });
   t.after(() => proxy.dispose());
   const db = proxy.env.CONTENT_DB;
   const files = (await readdir('migrations')).filter(name => name.endsWith('.sql')).sort();

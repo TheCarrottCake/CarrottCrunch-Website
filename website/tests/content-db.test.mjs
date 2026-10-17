@@ -11,7 +11,7 @@ import {
 const draft = { slug: 'test-announcement', title: 'TEST ONLY', bodyText: 'Not community content', actorId: 'test-actor' };
 
 test('D1 migrations, operations, publication filtering, and fixtures', async t => {
-  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: [] });
+  const proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', environment: 'content_dev', persist: false, remoteBindings: false, envFiles: ['tests/fixtures/empty-env.txt'] });
   t.after(() => proxy.dispose());
   const db = requireContentDatabase(proxy.env);
   const execute = async sql => db.batch(splitSql(sql).map(statement => db.prepare(statement)));

@@ -13,7 +13,7 @@ const image=new PhotonImage(new Uint8Array([243,140,62,255,246,240,232,255]),2,1
 const png=image.get_bytes(),jpeg=image.get_bytes_jpeg(85),webp=image.get_bytes_webp();image.free();
 function form(bytes=png){const result=new FormData();result.set('image',new File([bytes],'../../fictional-image.html',{type:'text/html'}));result.set('title','Fictional test image');return result;}
 async function setup(t){
- const proxy=await getPlatformProxy({configPath:'wrangler.jsonc',environment:'content_dev',persist:false,remoteBindings:false,envFiles:[]});t.after(()=>proxy.dispose());
+ const proxy=await getPlatformProxy({configPath:'wrangler.jsonc',environment:'content_dev',persist:false,remoteBindings:false,envFiles:['tests/fixtures/empty-env.txt']});t.after(()=>proxy.dispose());
  const db=proxy.env.CONTENT_DB;
  for(const name of (await readdir('migrations')).filter(n=>n.endsWith('.sql')).sort())await db.batch(splitSql(await readFile(`migrations/${name}`,'utf8')).map(sql=>db.prepare(sql)));
  const env={CONTENT_DB:db,MEDIA_BUCKET:proxy.env.MEDIA_BUCKET,DISCORD_CLIENT_ID:'100000000000000099',DISCORD_CLIENT_SECRET:'fictional-client-secret',AUTH_CSRF_SECRET:'fictional-csrf-secret-at-least-32-characters',CONTROL_ORIGIN:origin};
