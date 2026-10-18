@@ -51,7 +51,7 @@ export async function getPublishedEvents(db: D1Database, now = Date.now(), limit
   return result.results;
 }
 
-export type DraftInput = { slug: string; title: string; bodyText: string; actorId: string };
+export type DraftInput = { slug: string; title: string; bodyText: string; actorId: string; summary?: string };
 export type EventDraftInput = DraftInput & { startsAt: number; endsAt: number; timezone: string };
 
 async function createDraft(db: D1Database, input: DraftInput, event?: EventDraftInput): Promise<string> {
@@ -65,13 +65,14 @@ async function createDraft(db: D1Database, input: DraftInput, event?: EventDraft
     if (/^[+-]/.test(event.timezone)) throw new Error('Expected an IANA timezone');
     new Intl.DateTimeFormat('en', { timeZone: event.timezone }).format();
   }
+  if (input.summary !== undefined && (typeof input.summary !== 'string' || input.summary.length > 600)) throw new Error('Summary must be at most 600 characters');
   const id = crypto.randomUUID();
   const now = Date.now();
   const kind = event ? 'event' : 'announcement';
   const snapshot = {
     id, kind, slug: input.slug, title: input.title, body_text: input.bodyText,
     state: 'draft', is_fixture: 0, created_at: now, updated_at: now, published_at: null,
-    ...(event ? { starts_at: event.startsAt, ends_at: event.endsAt, timezone: event.timezone, event_state: 'active' } : {}),
+    ...(event ? { starts_at: event.startsAt, ends_at: event.endsAt, timezone: event.timezone, event_state: 'active' } : input.summary !== undefined ? { summary: input.summary } : {}),
   };
   // D1 batch is transactional: content, first revision, and audit succeed together.
   await db.batch([
@@ -79,7 +80,9 @@ async function createDraft(db: D1Database, input: DraftInput, event?: EventDraft
       VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(id, kind, input.slug, input.title, input.bodyText, now, now),
     event
       ? db.prepare('INSERT INTO events (content_id, starts_at, ends_at, timezone) VALUES (?, ?, ?, ?)').bind(id, event.startsAt, event.endsAt, event.timezone)
-      : db.prepare('INSERT INTO announcements (content_id) VALUES (?)').bind(id),
+      : input.summary !== undefined
+        ? db.prepare('INSERT INTO announcements (content_id, summary) VALUES (?, ?)').bind(id, input.summary)
+        : db.prepare('INSERT INTO announcements (content_id) VALUES (?)').bind(id),
     db.prepare('INSERT INTO content_revisions (id, content_id, revision, snapshot_json, actor_id, created_at) VALUES (?, ?, 1, ?, ?, ?)')
       .bind(crypto.randomUUID(), id, JSON.stringify(snapshot), input.actorId, now),
     db.prepare("INSERT INTO audit_records (id, content_id, actor_id, action, details_json, created_at) VALUES (?, ?, ?, 'created', ?, ?)")
@@ -88,7 +91,7 @@ async function createDraft(db: D1Database, input: DraftInput, event?: EventDraft
   return id;
 }
 
-// Internal building blocks only. Callers must eventually enforce staff authorization.
+// Internal building blocks only. Staff-facing callers must enforce authorization.
 export function createAnnouncementDraft(db: D1Database, input: DraftInput): Promise<string> {
   return createDraft(db, input);
 }

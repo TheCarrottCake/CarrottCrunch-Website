@@ -64,7 +64,7 @@ test('public desktop/mobile header links preserve Discord joining and close the 
 test('dashboard role navigation, mobile toggle/Escape, and CSRF logout remain intact', async () => {
   for (const role of ['Moderator', 'Administrator', 'Owner']) {
     const render = await harness('app/components/control-dashboard.tsx', 'ControlDashboard', {
-      identity: { username: 'fictional_staff', displayName: 'Fictional Staff' }, role, csrf: 'fictional-csrf-test-value',
+      identity: { username: 'fictional_staff', displayName: 'Fictional Staff' }, role, csrf: 'fictional-csrf-test-value', section: 'Overview',
     });
     let tree = render();
     const nav = () => one(tree, node => node.props?.id === 'control-nav');
@@ -76,7 +76,7 @@ test('dashboard role navigation, mobile toggle/Escape, and CSRF logout remain in
       assert.equal(item.props.children[1].props.children, 'Unavailable');
     }
     const links = nodes(nav(), node => node.props?.to);
-    assert.deepEqual(links.map(node => node.props.to), ['/control', '/control/media']);
+    assert.deepEqual(links.map(node => node.props.to), ['/control', '/control/news', '/control/media']);
     assert.equal(one(tree, node => node.type === 'main').props.id, 'control-main');
     assert.equal(one(tree, node => node.props?.to === '/').props.children, '← Public website');
     const form = one(tree, node => node.props?.action === '/control/logout');
@@ -91,6 +91,30 @@ test('dashboard role navigation, mobile toggle/Escape, and CSRF logout remain in
     one(tree, node => node.type === 'aside').props.onKeyDown({ key: 'Escape' }); tree = render();
     assert.equal(toggle().props['aria-expanded'], false); assert.equal(focused, true);
   }
+});
+
+test('dashboard welcome belongs to the explicit Overview section, independent of children', async () => {
+  const identity = { username: 'fictional_staff', displayName: 'Fictional Staff' };
+  const props = { identity, role: 'Owner', csrf: 'fictional-csrf' };
+  for (const children of [undefined, jsxRuntime.jsx('div', { children: 'Overview content' })]) {
+    const render = await harness('app/components/control-dashboard.tsx', 'ControlDashboard', { ...props, section: 'Overview', children });
+    const welcome = one(render(), node => node.props?.className === 'dashboard-welcome');
+    assert.equal(one(welcome, node => node.type === 'h1').props.children[1].props.children, identity.displayName);
+    assert.equal(one(welcome, node => node.props?.className === 'dashboard-account').props.children[0].props.children, identity.username);
+    assert.equal(one(welcome, node => node.props?.className === 'dashboard-role').props.children, 'Owner');
+    assert.equal(nodes(welcome, node => node.type === 'p').length, 2);
+  }
+  for (const [section, title] of [['Media Library', 'Media Library'], ['Media Library', 'Illustrative image'], ['News & Events', 'News & Events Studio'], ['News & Events', 'New announcement draft'], ['News & Events', 'Edit announcement draft']]) {
+    const children = jsxRuntime.jsx('section', { children: jsxRuntime.jsx('h1', { children: title }) });
+    const render = await harness('app/components/control-dashboard.tsx', 'ControlDashboard', { ...props, section, children });
+    const main = one(render(), node => node.type === 'main');
+    assert.equal(nodes(main, node => node.props?.className === 'dashboard-welcome' || node.props?.className === 'dashboard-account' || node.props?.className === 'dashboard-role').length, 0);
+    const label = one(main, node => node.props?.className === 'dashboard-section-header');
+    assert.equal(label.props.children.props.children[1], section);
+    assert.equal(one(main, node => node.type === 'h1').props.children, title);
+  }
+  const emptyTool = await harness('app/components/control-dashboard.tsx', 'ControlDashboard', { ...props, section: 'Media Library' });
+  assert.equal(nodes(emptyTool(), node => node.props?.className === 'dashboard-welcome' || node.props?.className === 'dashboard-notice').length, 0);
 });
 
 test('member/staff account disclosure supports keyboard, avatar fallback and secure logout', async () => {

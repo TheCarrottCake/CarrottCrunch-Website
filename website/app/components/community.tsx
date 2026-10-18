@@ -3,9 +3,9 @@ import { AccountMenu } from "./account-menu";
 import type { AccountView } from "../lib/account-view";
 import { Link, NavLink } from "react-router";
 
-/** Temporary bitten-C brand mark, shared by branding and decorative accents. */
+/** Authoritative CarrottCrunch artwork, shared by branding and decorative accents. */
 export function CrunchMark({ className }: { className?: string }) {
-  return <svg className={className} viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" d="M33 8a17 17 0 1 0 1 23l-8-7a7 7 0 1 1-1-9l4-2-2-4z"/><path fill="currentColor" d="m33 15 4-2 2 4-4 2zM30 3l4-2 2 4-4 2z"/></svg>;
+  return <img className={`crunch-mark${className ? ` ${className}` : ""}`} src="/branding/carrottcrunch-icon.svg" width={137} height={181} alt="" aria-hidden="true" decoding="async" />;
 }
 
 export type FeatureCardProps = {

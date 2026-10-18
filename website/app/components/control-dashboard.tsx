@@ -9,13 +9,14 @@ export type ControlDashboardProps = {
   role: StaffRole;
   csrf: string;
   children?: ReactNode;
-  section?: string;
+  section: 'Overview' | 'Media Library' | 'News & Events';
 };
 
 export function ControlDashboard({ identity, role, csrf, children, section }: ControlDashboardProps) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const tools = dashboardTools(role);
+  const isOverview = section === 'Overview';
   return <>
     <a className="skip-link" href="#control-main">Skip to content</a>
     <div className="container dashboard-layout">
@@ -40,15 +41,17 @@ export function ControlDashboard({ identity, role, csrf, children, section }: Co
         </div>
       </aside>
       <main id="control-main" className="dashboard-main" tabIndex={-1}>
-        <header className="dashboard-welcome">
-          <div className="eyebrow orange">STAFF WORKSPACE / {section || 'OVERVIEW'}</div>
-          {children ? <h2>Welcome, <span>{identity.displayName}</span>.</h2> : <h1>Welcome, <span>{identity.displayName}</span>.</h1>}
+        {isOverview ? <header className="dashboard-welcome">
+          <div className="eyebrow orange">STAFF WORKSPACE / OVERVIEW</div>
+          <h1>Welcome, <span>{identity.displayName}</span>.</h1>
           <p className="dashboard-account"><span>{identity.username}</span><span className="dashboard-role">{role}</span></p>
           <p>Your place to help shape CarrottCrunch. Staff tools will appear here as they become available.</p>
-        </header>
-        {children || <><section className="dashboard-notice" aria-labelledby="dashboard-status-title">
+        </header> : <header className="dashboard-section-header">
+          <div className="eyebrow orange">STAFF WORKSPACE / {section}</div>
+        </header>}
+        {children || (isOverview && <><section className="dashboard-notice" aria-labelledby="dashboard-status-title">
           <h2 id="dashboard-status-title">A little patience. Something good is growing.</h2>
-          <p>The private Media Library is available. Other management tools below are planned and cannot be opened yet.</p>
+          <p>Announcement and event drafting and the private Media Library are available. Publishing and other management tools are planned.</p>
         </section>
         <section aria-labelledby="dashboard-tools-title" className="dashboard-tools">
           <div className="dashboard-section-heading"><h2 id="dashboard-tools-title">Your tools</h2><span className="muted">Available navigation reflects your staff role.</span></div>
@@ -56,7 +59,7 @@ export function ControlDashboard({ identity, role, csrf, children, section }: Co
             <span className="micro orange">{tool.href ? 'AVAILABLE · STAFF TOOL' : 'UNAVAILABLE · FUTURE TOOL'}</span>
             <h3>{tool.href ? <Link to={tool.href}>{tool.name}</Link> : tool.name}</h3><p>{tool.description}</p>
           </article>)}</div>
-        </section></>}
+        </section></>)}
       </main>
     </div>
   </>;

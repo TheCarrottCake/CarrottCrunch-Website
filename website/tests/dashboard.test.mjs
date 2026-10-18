@@ -10,4 +10,5 @@ test('dashboard tools follow the specified role hierarchy', () => {
   assert.match(dashboardTools('Owner').find(tool => tool.id === 'settings').description, /role assignments and restricted configuration/);
   assert.doesNotMatch(admin.find(tool => tool.id === 'settings').description, /role assignments|restricted configuration/);
   assert.deepEqual(dashboardTools('unknown'), []);
+  for (const role of ['Moderator', 'Administrator', 'Owner']) assert.equal(dashboardTools(role).find(tool => tool.id === 'news').href, '/control/news');
 });

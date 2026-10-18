@@ -28,7 +28,8 @@ export function NewsItem({ article, compact = false }: { article: PublishedAnnou
   </article>;
 }
 
-export function EventCard({ event, now, compact = false }: { event: PublishedEvent; now: number; compact?: boolean }) {
+export type EventPresentation = Pick<PublishedEvent, 'title' | 'body_text' | 'is_fixture' | 'starts_at' | 'ends_at' | 'timezone' | 'event_state'>;
+export function EventCard({ event, now, compact = false }: { event: EventPresentation; now: number; compact?: boolean }) {
   const status = eventStatus(event, now);
   return <article className={compact ? 'event-summary' : 'public-card'}>
     <span className="micro orange">{event.is_fixture ? 'FICTIONAL DEVELOPMENT EVENT · ' : ''}{status}</span>

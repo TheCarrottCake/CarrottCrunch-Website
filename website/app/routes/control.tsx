@@ -25,7 +25,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 }
 export default function Control({ loaderData }: Route.ComponentProps) {
-  return <ControlDashboard {...loaderData} />;
+  return <ControlDashboard {...loaderData} section="Overview" />;
 }
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   const forbidden = isRouteErrorResponse(error) && error.status === 403;

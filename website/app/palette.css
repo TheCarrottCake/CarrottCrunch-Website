@@ -1,0 +1,126 @@
+/* Apricot Glow: shared semantic tokens for public and staff workspaces. */
+:root {
+  --page-bg: #FFE8D2;
+  --surface: #FFF8ED;
+  --text: #35251F;
+  --accent: #B64223;
+  --supporting: #F4A453;
+  --featured: #44271F;
+  --on-featured: #FFF5E9;
+  --text-muted: #70513F;
+  --on-action: #FFF5E9;
+  --action-hover: #91351C;
+  --border: #CDAA90;
+  --border-strong: #95745E;
+  --field-error: #B64223;
+  --shadow: #35251F;
+  --focus: #B64223;
+  --orange: var(--accent);
+  --cream: var(--text);
+  --coral: var(--accent);
+  --green: var(--accent);
+  --muted: var(--text-muted);
+  --line: var(--border);
+}
+
+/* Only staff navigation is dark; content inherits the shared light tokens. */
+.dashboard-sidebar {
+  color: var(--on-featured);
+  background: var(--featured);
+  border-color: var(--featured);
+  --orange: var(--supporting);
+  --focus: var(--supporting);
+}
+.dashboard-sidebar .text-link,
+.dashboard-nav-unavailable,
+.dashboard-nav-unavailable small { color: var(--on-featured); }
+.dashboard-nav-unavailable { opacity: .75; }
+.dashboard-sidebar-actions { border-color: var(--border-strong); }
+.dashboard-nav > a:hover,
+.dashboard-menu-toggle:hover { background: var(--text-muted); }
+.dashboard-nav > a[aria-current="page"] {
+  color: var(--on-action);
+  background: var(--accent);
+  border-left-color: var(--supporting);
+}
+.dashboard-nav > a[aria-current="page"]:hover { background: var(--action-hover); }
+.dashboard-sidebar-actions > .text-link:hover { color: var(--supporting); }
+.dashboard-sidebar .secondary { color: var(--text); }
+.dashboard-sidebar :is(a, button):focus-visible { outline-color: var(--focus); }
+.dashboard-notice, .control-identity, .studio-message { background: var(--surface); }
+.studio-message { border-left: 4px solid var(--accent); }
+.media-tabs a { background: var(--surface); }
+.media-tabs a:hover { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.media-tabs a[aria-current="page"] { background: var(--accent); color: var(--on-action); }
+.media-tabs a[aria-current="page"]:hover { background: var(--action-hover); }
+.media-workspace input:not([type=checkbox]),
+.media-workspace textarea, .media-workspace select,
+.studio-workspace input:not([type=hidden]), .studio-workspace textarea {
+  background: var(--surface);
+}
+#control-main :is(h1, h2, .button) { overflow-wrap: anywhere; }
+#control-main .button { white-space: normal; text-align: center; }
+.media-search > label { min-width: 0; max-width: 100%; }
+
+body { min-height: 100vh; color: var(--text); background: var(--page-bg); }
+:where(a, button, input, select, textarea, summary, iframe):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+::selection { background: var(--accent); color: var(--on-action); }
+.skip-link { color: var(--on-action); }
+.primary, .nav .nav-join { color: var(--on-action); }
+.nav .nav-join:hover, .nav .nav-join:focus-visible { color: var(--on-action); }
+.secondary { background: var(--surface); border-color: var(--border-strong); }
+.secondary:hover { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); border-color: var(--accent); }
+.nav a:hover, .nav a:focus-visible { color: var(--accent); }
+.nav .nav-join:hover, .nav .nav-join:focus-visible { color: var(--on-action); }
+.content-notice { background: var(--surface); }
+.content-body code { background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.join-section { background: var(--surface); }
+.news-date { background: var(--surface); }
+.button:disabled, #control-main .button:disabled {
+  opacity: 1;
+  color: var(--text-muted);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* Featured areas retain their image contrast and warm, dark treatment. */
+.showcase, .gallery-card, .server-card {
+  color: var(--on-featured);
+  --focus: var(--supporting);
+  --scene-accent: var(--supporting);
+  --orange: var(--supporting);
+  --muted: var(--on-featured);
+}
+.showcase.builders, .showcase.night { --scene-accent: var(--supporting); }
+.showcase-crunch, .scene-tag { color: var(--on-featured); }
+.scene-tag, .concept-label { background: var(--featured); }
+.showcase-shade {
+  background: linear-gradient(0deg, var(--featured), color-mix(in srgb, var(--featured) 90%, transparent) 42%, transparent 85%);
+}
+.gallery-card:after {
+  background: linear-gradient(0deg, var(--featured), color-mix(in srgb, var(--featured) 90%, transparent) 40%, transparent);
+}
+.slide-dots button:after { background: color-mix(in srgb, var(--on-featured) 55%, transparent); }
+.slide-controls button { color: var(--on-featured); border-color: var(--supporting); background: var(--featured); }
+.slide-controls button:hover { background: var(--text-muted); }
+.server-card { background: var(--featured); border-color: var(--featured); }
+.status-badge, .server-details, .server-pending { border-color: color-mix(in srgb, var(--on-featured) 35%, transparent); }
+.server-pending { border-left-color: var(--supporting); }
+.server-details strong { color: var(--on-featured); }
+.discord-widget { background: var(--featured); }
+
+/* Native fields inherit the current public/staff scope. */
+input:not([type=hidden]):not([type=checkbox]):not([type=radio]), select, textarea {
+  color: var(--text);
+  background-color: var(--surface);
+  border-color: var(--border-strong);
+  accent-color: var(--accent);
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }
+input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
+/* Keep validation visible after the shared native-field border rule. */
+#control-main [aria-invalid=true] { border-color: var(--field-error); }
