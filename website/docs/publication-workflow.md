@@ -1,4 +1,10 @@
+> **Content Studio V2:** For the current direct-publishing workflow and shared media architecture, see [content-studio-v2.md](content-studio-v2.md). Approval instructions below describe the retained historical implementation.
+
 # Milestone 05C — Review and publication
+
+Direct uploads now support [pending image review inside Content Studio](content-image-uploads.md). A pending-image draft can be saved/submitted, but database and workflow guards block approval/release until an Administrator/Owner reviews creator evidence, explicitly authorizes the image and saves the resulting new revision. Image consent alone never approves or publishes the content.
+
+Milestone [05D editorial media](editorial-media.md) now adds optional announcement/event featured images to these same revision, approval and release transactions. The workflow revalidates exact image bindings, current editorial consent and prepared bytes for approval/publication/scheduling/Cron. Public image delivery follows only the current authorized live release; consent revocation/expiry suppresses its image while retaining published text. No production activation is included.
 
 ## Scope and preservation
 
@@ -19,6 +25,8 @@ Before any future production activation, inventory that environment separately. 
 - Archive clears public visibility and pending schedules and closes the working item. There is no archive restoration UI.
 
 The management screen provides searchable status filters. `/control/review` combines pending announcements and events, oldest first, with submitter and time. `/control/workflow/:contentId` previews the exact saved editorial revision and provides authorized controls/history. Overview and News & Events show pending-review and overdue-schedule counts on load; these are indicators, not push notifications.
+
+The final UX polish adds compact review cards with safe, collapsible summary/excerpt previews and contextual empty states. Shared editor/review toolbars identify working and live revision numbers, public visibility, private unpublished edits, current approval, and the pending Toronto publication time. Save feedback explicitly preserves the live revision. See [editor toolbar documentation](editor-toolbar.md#final-ux-polish) for validation and the remaining authenticated browser checklist. Publication, approval, concurrency, CSRF and Cron mutation logic are unchanged by this presentation pass.
 
 Draft trash remains available only for never-released, unpublished working drafts in Draft status. It cannot remove a pending-review/approved/scheduled/live item. Previously released content uses the Administrator/Owner unpublish/archive actions instead. Archived items are excluded from default management lists and can be inspected with the Archived filter.
 

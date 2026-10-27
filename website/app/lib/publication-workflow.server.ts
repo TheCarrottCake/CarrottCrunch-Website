@@ -1,3 +1,4 @@
+import { assertRevisionMedia } from './editorial-media.server.ts';
 import { redirect } from 'react-router';
 import { requireStaffAction, type AuthEnvironment, type StaffRole } from './staff-auth.server.ts';
 import { StudioError, studioFailure, studioHeaders } from './content-studio.server.ts';
@@ -28,6 +29,15 @@ export async function getWorkflow(db: D1Database, id: string): Promise<Workflow>
  const row = await db.prepare('SELECT * FROM content_workflows WHERE content_id=?').bind(id).first<Workflow>();
  if (!row) throw new StudioError('Content workflow not found.',404);
  return row;
+}
+
+/** Private presentation metadata; callers must first require a staff session. */
+export async function workflowPresentation(db: D1Database, workflow: Workflow) {
+ const live = workflow.live_release_id ? await db.prepare('SELECT revision FROM content_releases WHERE id=? AND content_id=?').bind(workflow.live_release_id,workflow.content_id).first<{revision:number}>() : null;
+ const pending = workflow.pending_release_id ? await db.prepare('SELECT due_at FROM content_releases WHERE id=? AND content_id=?').bind(workflow.pending_release_id,workflow.content_id).first<{due_at:number}>() : null;
+ const approval = workflow.approval_id ? await db.prepare("SELECT actor_name,created_at FROM content_reviews WHERE id=? AND content_id=? AND revision=? AND action='approved'").bind(workflow.approval_id,workflow.content_id,workflow.editorial_revision).first<{actor_name:string;created_at:number}>() : null;
+ return { liveRevision:live?.revision ?? null, scheduledAt:pending?.due_at ?? null,
+   approvedBy:approval?.actor_name ?? null, approvedAt:approval?.created_at ?? null };
 }
 export async function workflowHistory(db: D1Database, id: string) {
  const labels:Record<string,string>={submit:'Submitted for review',approve:'Approved',reject:'Returned for revision',publish:'Published',schedule:'Publication scheduled','cancel-schedule':'Schedule cancelled',unpublish:'Unpublished',archive:'Archived','scheduled-publication':'Scheduled publication completed',draft_deleted:'Draft deleted'};
@@ -84,7 +94,7 @@ async function workflowTransition(db:D1Database,id:string,intent:SingleWorkflowI
 }
 
 /** Compose real submission/approval/release transitions into ONE atomic D1 batch. */
-export async function changeWorkflow(db:D1Database,id:string,intent:WorkflowIntent,revision:number,version:number,actor:Actor,options:{explanation?:string;dueAt?:number}={},now=Date.now()) {
+export async function changeWorkflow(db:D1Database,id:string,intent:WorkflowIntent,revision:number,version:number,actor:Actor,options:{explanation?:string;dueAt?:number}={},now=Date.now(),bucket?:R2Bucket) {
  if(!workflowIntents.includes(intent))throw new StudioError('Use the supplied workflow controls.');
  let steps:SingleWorkflowIntent[];
  let current:Workflow|undefined;
@@ -95,6 +105,7 @@ export async function changeWorkflow(db:D1Database,id:string,intent:WorkflowInte
   if(!['draft','review','approved'].includes(current.status))throw new StudioError('Save a new working revision or cancel the existing schedule before publishing.',409);
   steps=[...(current.status==='draft'?['submit' as const]:[]),...(current.status!=='approved'?['approve' as const]:[]),intent==='approve-publish'?'publish':'schedule'];
  } else steps=[intent];
+ if(steps.some(step=>['submit','approve','publish','schedule'].includes(step)))await assertRevisionMedia(db,bucket,id,revision,now,options.dueAt,steps.every(step=>step==='submit'));
  const statements:D1PreparedStatement[]=[];
  for(const step of steps) {
   const transition=await workflowTransition(db,id,step,revision,current?.version??version,actor,options,now,current);
@@ -103,7 +114,7 @@ export async function changeWorkflow(db:D1Database,id:string,intent:WorkflowInte
  await db.batch(statements).catch(()=>{throw new StudioError('This content changed or the action could not be completed. Reload its workflow.',409);});
 }
 
-export async function sweepPublications(db:D1Database,now=Date.now()) {
+export async function sweepPublications(db:D1Database,now=Date.now(),bucket?:R2Bucket) {
  const due=await db.prepare(`SELECT l.id,l.content_id,l.actor_id,l.actor_name,l.revision FROM content_releases l JOIN content_workflows w ON w.pending_release_id=l.id
  WHERE w.status='scheduled' AND l.due_at<=? AND w.editorial_revision=l.revision AND w.approval_id=l.approval_id
  AND EXISTS(SELECT 1 FROM staff_accounts a WHERE a.discord_user_id=l.actor_id AND a.active=1 AND a.role IN('Administrator','Owner'))
@@ -111,6 +122,7 @@ export async function sweepPublications(db:D1Database,now=Date.now()) {
  let published=0,failed=0;
  for(const l of due.results) {
  try {
+ await assertRevisionMedia(db,bucket,l.content_id,l.revision,now);
  const results=await db.batch([
  db.prepare(`UPDATE content_workflows SET live_release_id=?,live_at=?,pending_release_id=NULL,status='published',version=version+1
  WHERE content_id=? AND pending_release_id=? AND status='scheduled' AND editorial_revision=?
@@ -141,7 +153,7 @@ export async function workflowAction(request:Request,env:AuthEnvironment,id:stri
  for(const k of ['explanation','date','time','occurrence','returnTo']) if(f.getAll(k).length>1)throw new StudioError('Supply each field once.');
  if(f.has('returnTo')&&f.get('returnTo')!=='editor')throw new StudioError('Use the supplied workflow controls.');
  const dueAt=(intent==='schedule'||intent==='approve-schedule')?publicationInstant(f.get('date')||'',f.get('time')||'',f.get('occurrence')||''):undefined;
- await changeWorkflow(env.CONTENT_DB,id,intent,Number(f.get('revision')),Number(f.get('version')),{id:session.discord_user_id,name:session.display_name||session.username,role:session.role},{explanation:f.get('explanation')||'',dueAt});
+ await changeWorkflow(env.CONTENT_DB,id,intent,Number(f.get('revision')),Number(f.get('version')),{id:session.discord_user_id,name:session.display_name||session.username,role:session.role},{explanation:f.get('explanation')||'',dueAt},Date.now(),env.MEDIA_BUCKET);
  let destination=`/control/workflow/${id}?done=1`;
  if(f.get('returnTo')==='editor') {
   const content=await env.CONTENT_DB.prepare('SELECT kind FROM content_items WHERE id=?').bind(id).first<{kind:string}>();

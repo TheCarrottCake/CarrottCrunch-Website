@@ -20,24 +20,26 @@ export function requireMediaStorage(env: MediaEnvironment) {
 }
 const selection = `SELECT a.id,a.mime_type,a.byte_size,a.width,a.height,a.title,a.description,a.alt_text,a.original_filename,a.uploaded_by,
  a.created_at,a.updated_at,a.version,a.deleted_at,a.recover_until,t.anonymous,t.creator_name,t.source_url,t.provenance,
- (SELECT count(*) FROM media_usage_references r WHERE r.asset_id=a.id) AS usage_count
+ ((SELECT count(*) FROM media_usage_references r WHERE r.asset_id=a.id) + (SELECT count(*) FROM active_editorial_media r WHERE r.asset_id=a.id) + (SELECT count(*) FROM studio_active_media r WHERE r.asset_id=a.id)) AS usage_count
  FROM media_assets a JOIN media_attribution t ON t.asset_id=a.id`;
+async function mediaSelection(db:D1Database){const migrated=await db.prepare("SELECT name FROM sqlite_master WHERE type='view' AND name='studio_active_media'").first();return migrated?selection:selection.replace(' + (SELECT count(*) FROM studio_active_media r WHERE r.asset_id=a.id)','');}
 export function validAssetId(id: string) { return /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(id); }
 export async function listMedia(db: D1Database, search = '', trash = false, offset = 0, mime = '') {
   if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new MediaError('Invalid page.');
   if (!['','image/jpeg','image/png','image/webp'].includes(mime)) throw new MediaError('Invalid image type filter.');
   const query = search.trim().slice(0, 160).replace(/[\\%_]/g, '\\$&');
-  return (await db.prepare(`${selection} WHERE a.deleted_at IS ${trash ? 'NOT ' : ''}NULL
+  return (await db.prepare(`${await mediaSelection(db)} WHERE a.deleted_at IS ${trash ? 'NOT ' : ''}NULL
     AND (?='' OR a.mime_type=?) AND (a.title LIKE ? ESCAPE '\\' OR a.original_filename LIKE ? ESCAPE '\\') ORDER BY a.created_at DESC,a.id LIMIT 49 OFFSET ?`)
     .bind(mime, mime, `%${query}%`, `%${query}%`, offset).all<MediaAsset>()).results;
 }
 export async function getMedia(db: D1Database, id: string) {
   if (!validAssetId(id)) throw new MediaError('Image not found.', 404);
-  const asset = await db.prepare(`${selection} WHERE a.id=?`).bind(id).first<MediaAsset>();
+  const asset = await db.prepare(`${await mediaSelection(db)} WHERE a.id=?`).bind(id).first<MediaAsset>();
   if (!asset) throw new MediaError('Image not found.', 404);
   const permissions = (await db.prepare(`SELECT purpose,status,rights_holder,evidence,conditions,reviewed_by,reviewed_at,expires_at FROM media_permissions WHERE asset_id=? ORDER BY purpose`).bind(id).all<MediaPermission>()).results;
   const references = (await db.prepare('SELECT purpose,reference_label FROM media_usage_references WHERE asset_id=? ORDER BY created_at DESC LIMIT 100').bind(id).all<{ purpose: MediaPurpose; reference_label: string }>()).results;
-  return { asset, permissions, references };
+  const editorialReferences = (await db.prepare('SELECT content_id,revision FROM active_editorial_media WHERE asset_id=? LIMIT 100').bind(id).all<{content_id:string;revision:number}>()).results;
+  return { asset, permissions, references, editorialReferences };
 }
 function field(form: FormData, name: string, max: number, required = false) {
   const values = form.getAll(name);

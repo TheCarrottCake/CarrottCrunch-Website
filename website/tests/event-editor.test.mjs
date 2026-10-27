@@ -14,6 +14,10 @@ import * as eventDisplay from '../app/lib/event-display.ts';
 async function components(react = React) {
   const imports = { react, 'react/jsx-runtime': jsx, '../lib/event-time': eventTime, '../lib/event-display': eventDisplay,
     './content-body': { ContentBody }, 'react-router': { Form: 'form', Link: ({ to, ...props }) => React.createElement('a', { ...props, href: to }), useNavigation: () => ({ state: 'idle' }) } };
+  const mediaComponents=await toolbarComponents();
+  imports['./content-image-upload']=mediaComponents.imports['./content-image-upload'];
+  imports['./featured-image-field']=mediaComponents.imports['./featured-image-field'];
+  imports['./featured-image']=mediaComponents.imports['./featured-image'];
   imports['./editor-toolbar'] = (await toolbarComponents(react)).imports['./editor-toolbar'];
   async function load(file) {
     const module = { exports: {} };
@@ -22,6 +26,7 @@ async function components(react = React) {
     vm.runInNewContext(output, { module, exports: module.exports, require: key => { assert.ok(key in imports, `Unexpected import ${key}`); return imports[key]; } });
     return module.exports;
   }
+  imports['./studio-render'] = await load('app/components/studio-render.tsx');
   imports['./news-events'] = await load('app/components/news-events.tsx');
   return { ...await load('app/components/event-editor.tsx'), ...imports['./news-events'] };
 }
@@ -68,6 +73,15 @@ test('changing a time clears its occurrence while preserving the other saved end
   field(EventEditor(props)).props.change('endLocal', '2026-11-01T02:00');
   assert.equal(state.startOccurrence, ''); assert.equal(state.endOccurrence, '');
   assert.equal(state.startLocal, '2026-11-01T01:20'); assert.equal(state.bodyText, initial.bodyText);
+});
+
+test('event image changes clear the other attachment type without losing event fields',async()=>{
+ let state;
+ const {EventEditor}=await components({...React,useState:value=>[state??=value,next=>{state=typeof next==='function'?next(state):next;} ]});
+ const props={initial:{...initial,featuredImageId:'TEST approved image'},csrf:'test',now};
+ const field=tree=>tree.props.children.find(child=>child?.props?.className==='studio-editor-grid').props.children[0].props.children.find(child=>child?.props?.onPendingChange);
+ field(EventEditor(props)).props.onPendingChange('TEST pending image');assert.equal(state.featuredImageId,'');assert.equal(state.pendingImageId,'TEST pending image');
+ field(EventEditor(props)).props.onChange('TEST newly authorized image');assert.equal(state.pendingImageId,'');assert.equal(state.featuredImageId,'TEST newly authorized image');assert.equal(state.bodyText,initial.bodyText);assert.equal(state.startLocal,initial.startLocal);
 });
 
 test('multi-day and existing off-grid times are preserved without precision in visible controls', async () => {

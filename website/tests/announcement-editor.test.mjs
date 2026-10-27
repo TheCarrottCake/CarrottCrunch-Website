@@ -14,6 +14,10 @@ async function editor() {
   const imports = { react: React, 'react/jsx-runtime': jsx, './content-body': { ContentBody },
     'react-router': { Form: 'form', Link: ({ to, ...props }) => React.createElement('a', { ...props, href: to }), useNavigation: () => ({ state: 'idle' }) },
   };
+  const mediaComponents=await toolbarComponents();
+  imports['./content-image-upload']=mediaComponents.imports['./content-image-upload'];
+  imports['./featured-image-field']=mediaComponents.imports['./featured-image-field'];
+  imports['./featured-image']=mediaComponents.imports['./featured-image'];
   imports['./editor-toolbar'] = (await toolbarComponents()).imports['./editor-toolbar'];
   const source = await readFile('app/components/announcement-editor.tsx', 'utf8');
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;

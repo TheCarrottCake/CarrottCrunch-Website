@@ -4,7 +4,6 @@ import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
 import { AuthError, currentSiteSession, requireStaff, staffCsrfToken, staffAuthHeaders } from '../lib/staff-auth.server';
 import { ControlDashboard } from '../components/control-dashboard';
 import { ControlShell } from '../components/control-shell';
-import { workflowCounts } from '../lib/publication-workflow.server';
 
 export function headers() { return staffAuthHeaders; }
 export function meta() {
@@ -14,7 +13,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   try {
     const env = context.get(contentEnvironmentContext);
     const session = await requireStaff(request, env, 'Moderator', import.meta.env.DEV);
-    return data({ identity: { username: session.username, displayName: session.display_name }, role: session.role, csrf: await staffCsrfToken(session, env), counts:env.CONTENT_DB?await workflowCounts(env.CONTENT_DB):null }, { headers: staffAuthHeaders });
+    return data({ identity: { username: session.username, displayName: session.display_name }, role: session.role, csrf: await staffCsrfToken(session, env) }, { headers: staffAuthHeaders });
   } catch (error) {
     if (error instanceof AuthError && error.code === 'denied') {
       try {

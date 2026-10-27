@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { clockLabel, eventTimeChoices, eventTimeOptions, EVENT_TIMEZONE, formatTorontoDateTime } from '../lib/event-time';
 
-export function PublicationTime() {
- const [date,setDate]=useState(''),[time,setTime]=useState(''),[occurrence,setOccurrence]=useState('');
+export function PublicationTime({initial}:{initial?:{date:string;time:string;occurrence:string}}={}) {
+ const [date,setDate]=useState(initial?.date||''),[time,setTime]=useState(initial?.time||''),[occurrence,setOccurrence]=useState(initial?.occurrence||'');
  let repeated=false,summary='',problem='';
  if(date&&time)try {const choices=eventTimeChoices(`${date}T${time}`,EVENT_TIMEZONE);repeated=choices.length===2;const selected=choices.find(c=>c.occurrence===occurrence);if(selected)summary=`${formatTorontoDateTime(selected.instant)}${repeated?` (${occurrence==='earlier'?'first':'second'} time)`:''} — Toronto time`;}
  catch(error){problem=(error as Error).message;}

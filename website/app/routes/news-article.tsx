@@ -1,3 +1,5 @@
+import {StudioBody} from '../components/studio-render';
+import {FeaturedImageView} from '../components/featured-image';
 import { data, isRouteErrorResponse, Link } from 'react-router';
 import type { Route } from './+types/news-article';
 import { publicContentSource } from '../lib/public-content.server';
@@ -42,7 +44,8 @@ export default function NewsArticle({ loaderData }: Route.ComponentProps) {
     <header className="public-page-intro"><div className="eyebrow orange">{article.is_fixture ? 'FICTIONAL DEVELOPMENT NEWS' : 'COMMUNITY NEWS'}</div><h1>{article.title}</h1>
       <p><time dateTime={new Date(article.published_at).toISOString()}>Published {new Intl.DateTimeFormat('en-CA', { dateStyle: 'long', timeZone: 'UTC' }).format(article.published_at)} (UTC)</time></p>
     </header>
-    <ContentBody text={article.body_text} />
+    <FeaturedImageView key={article.featuredImage?.id} image={article.featuredImage}/>
+    {article.studioImages?<StudioBody text={article.body_text} images={article.studioImages}/>:<ContentBody text={article.body_text} />}
   </article>;
 }
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -1,5 +1,6 @@
 // Post-build check of real route loaders/actions with isolated D1 and mocked Discord.
 import assert from 'node:assert/strict';
+import {verifyStudioBuild} from './fixtures/studio-build-check.mjs';
 import { readFile, readdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -14,6 +15,7 @@ try {
   const bundles = (await readdir('build/server/assets')).filter(name => name.startsWith('server-build-') && name.endsWith('.js'));
   assert.equal(bundles.length, 1, 'Run npm run build first');
   const build = await import(pathToFileURL(resolve('build/server/assets', bundles[0])).href);
+  if(build.routes['routes/studio-posts']){await verifyStudioBuild(build,db);}else{
   // These documents contain native sign-in/logout or authenticated mutation forms.
   for (const name of ['login', 'account', 'control', 'control-media', 'control-media-detail', 'control-news', 'control-news-new', 'control-news-detail', 'control-events-new', 'control-events-detail', 'control-draft-delete','control-workflow','control-review']) {
     const headers = new Headers(build.routes[`routes/${name}`].module.headers());
@@ -137,12 +139,22 @@ try {
   assert.equal((await workflowPost(reviewEventId,'submit')).status,303);
   const queue=(await reviewQueue.loader({request:studioRequest('/control/review'),context,params:{}})).data;
   assert.deepEqual(new Set(queue.items.map(i=>i.kind)),new Set(['event','announcement']));
+  assert.equal(queue.items.find(i=>i.kind==='event').preview,'TEST ONLY queue body');
+  assert.equal(queue.items.find(i=>i.kind==='announcement').preview,'TEST ONLY summary');
+  assert.ok(queue.items.every(i=>!('snapshot_json' in i)), 'Queue only returns bounded preview fields');
   assert.equal((await workflowPost(workflowId,'approve')).status,303);
+  const approvedPresentation=(await workflowRoute.loader(workflowArgs(workflowId))).data.publication;
+  assert.ok(approvedPresentation.approvedBy);assert.ok(approvedPresentation.approvedAt);
+  assert.equal(approvedPresentation.liveRevision,null);
   await assert.rejects(publicArticle.loader({request:new Request(origin+'/updates/'+workflowId),context,params:{announcementId:workflowId}}),e=>e.status===404);
   assert.equal((await workflowPost(workflowId,'publish',{_csrf:'bad'})).status,403);
   assert.equal((await workflowPost(workflowId,'publish')).status,303);
+  assert.equal((await workflowRoute.loader(workflowArgs(workflowId))).data.publication.liveRevision,1);
   assert.equal((await publicArticle.loader({request:new Request(origin+'/updates/'+workflowId),context,params:{announcementId:workflowId}})).data.article.title,'TEST ONLY workflow announcement');
   assert.equal((await editAnnouncement.action({request:studioPost({...fields,title:'TEST ONLY private edit',revision:'1'}),context,params:{announcementId:workflowId}})).status,303);
+  const replacementPresentation=(await editAnnouncement.loader({request:studioRequest('/control/news/'+workflowId),context,params:{announcementId:workflowId}})).data;
+  assert.equal(replacementPresentation.publication.liveRevision,1);assert.equal(replacementPresentation.workflow.editorial_revision,2);
+  assert.equal(replacementPresentation.publication.approvedBy,null);
   assert.equal((await publicArticle.loader({request:new Request(origin+'/updates/'+workflowId),context,params:{announcementId:workflowId}})).data.article.title,'TEST ONLY workflow announcement');
   assert.equal((await workflowPost(workflowId,'publish')).status,409);
   assert.equal((await workflowPost(workflowId,'unpublish')).status,303);
@@ -225,4 +237,5 @@ try {
     assert.doesNotMatch(await readFile(`build/client/assets/${name}`, 'utf8'), /DISCORD_CLIENT_SECRET|AUTH_CSRF_SECRET|staff_oauth_transactions|staff_sessions|site_sessions/);
   }
   console.log('Built member/control loader/action checks passed: announcement and event drafts, exact timing, 400/409 preservation, published-event protection, public isolation, staff/member boundaries, logout revocation, and server-only authentication code.');
+  }
 } finally { await proxy.dispose(); }

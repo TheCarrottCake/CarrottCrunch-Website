@@ -4,6 +4,7 @@ import type { StaffRole } from '../lib/staff-auth.server';
 import type { Workflow, WorkflowIntent } from '../lib/publication-workflow.server';
 import { PublicationTime } from './publication-time';
 import { DeleteDraftButton } from './delete-draft-button';
+import { formatTorontoDateTime } from '../lib/event-time';
 
 export type EditorToolbarContext = {
   workflow?: Workflow;
@@ -12,6 +13,7 @@ export type EditorToolbarContext = {
   history?: ReactNode;
   headingId?: string;
   returnToEditor?: boolean;
+  publication?: { liveRevision: number | null; scheduledAt: number | null; approvedBy: string | null; approvedAt: number | null };
 };
 type ToolbarProps = EditorToolbarContext & {
   title: string;
@@ -21,6 +23,7 @@ type ToolbarProps = EditorToolbarContext & {
   dirty?: boolean;
   conflict?: boolean;
   busy?: boolean;
+  imagePending?: boolean;
 };
 const labels: Record<string, string> = {
   draft: 'Draft', review: 'Pending review', approved: 'Approved', scheduled: 'Scheduled',
@@ -42,7 +45,7 @@ function ActionIcon({ action }: { action: string }) {
 
 /** One toolbar for both editors and the saved-revision review screen. */
 export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderator', released = false,
-  formId, dirty = false, conflict = false, busy = false, history, headingId = 'editor-heading', returnToEditor = true }: ToolbarProps) {
+  formId, dirty = false, conflict = false, busy = false, imagePending = false, history, publication, headingId = 'editor-heading', returnToEditor = true }: ToolbarProps) {
   const admin = role === 'Administrator' || role === 'Owner';
   const fetcher = useFetcher<{ message?: string; status?: number }>();
   const [active, setActive] = useState<WorkflowIntent | 'history' | null>(null);
@@ -55,6 +58,7 @@ export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderato
   const returnFocus = useRef<HTMLElement | null>(null);
   const more = useRef<HTMLDetailsElement>(null);
   const dialogId = useId();
+  const toolbar = useRef<HTMLElement>(null);
   const pending = locked || fetcher.state !== 'idle';
   const stale = conflict || fetcher.data?.status === 409;
   const disabled = busy || pending || stale || dirty;
@@ -81,6 +85,16 @@ export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderato
     document.addEventListener('pointerdown', closeOutside);
     return () => document.removeEventListener('pointerdown', closeOutside);
   }, []);
+  useEffect(() => {
+    const element = toolbar.current;
+    const workspace = element?.closest<HTMLElement>('.studio-workspace');
+    if (!element || !workspace) return;
+    const measure = () => workspace.style.setProperty('--editor-toolbar-height', `${element.getBoundingClientRect().height}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => { observer.disconnect(); workspace.style.removeProperty('--editor-toolbar-height'); };
+  }, []);
   const open = (intent: WorkflowIntent | 'history', button: HTMLElement) => {
     returnFocus.current = more.current?.contains(button) ? more.current.querySelector('summary') : button;
     more.current?.removeAttribute('open');
@@ -88,11 +102,12 @@ export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderato
     setActive(intent);
   };
   const actionButton = (intent: WorkflowIntent, primary = false) => <button type="button"
-    className={`button ${primary ? 'primary' : 'secondary'}`} disabled={disabled} aria-haspopup="dialog"
+    className={`button ${intent === 'reject' ? 'workflow-reject' : primary ? 'primary' : 'secondary'}`} disabled={disabled || (imagePending && ['approve','approve-publish','approve-schedule'].includes(intent))} aria-haspopup="dialog"
+    aria-describedby={dirty ? `${dialogId}-save-hint` : undefined}
     onClick={event => open(intent, event.currentTarget)}><ActionIcon action={intent} />{labels[intent]}</button>;
   const destructive = active === 'archive' || active === 'unpublish';
   const description = active === 'approve-publish'
-    ? `Publish saved revision ${w?.editorial_revision} publicly now. Required submission and explicit approval are recorded.`
+    ? `Approve saved revision ${w?.editorial_revision} and publish it publicly now.`
     : active === 'approve-schedule'
       ? `Approve revision ${w?.editorial_revision} if needed and schedule its public release.`
       : active === 'archive'
@@ -105,21 +120,24 @@ export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderato
               : active === 'submit' ? `Submit saved revision ${w?.editorial_revision} for review.`
                 : 'Cancel the pending release. The unchanged revision remains approved.';
 
-  return <header className="editor-toolbar" aria-label={`${kind === 'event' ? 'Event' : 'Announcement'} editor actions`}>
+  return <header className="editor-toolbar" ref={toolbar} aria-label={`${kind === 'event' ? 'Event' : 'Announcement'} editor actions`}>
     <div className="editor-toolbar-heading"><h1 id={headingId} title={title}>{title}</h1>
-      <p className="editor-toolbar-state" data-workflow-status={w?.status} aria-live="polite">{w ? `${labels[w.status]} · Revision ${w.editorial_revision}` : 'New private draft'}
-        {w?.live_release_id ? ' · Live version unchanged by edits' : ''} · {dirty ? 'Unsaved changes' : 'Saved'}{pending || busy ? ' · Working…' : ''}</p>
+      <p className="editor-toolbar-state" aria-live="polite"><span className="workflow-status" data-workflow-status={w?.status}>{w ? labels[w.status] : 'New draft'}</span> · {w ? `Working revision ${w.editorial_revision}` : 'Save to create a revision'} · {dirty ? 'Unsaved changes' : 'Saved'}{pending || busy ? ' · Working…' : ''}</p>
+      <p className="editor-toolbar-state">{w?.live_release_id
+        ? `Publicly visible${publication?.liveRevision ? ` · Live revision ${publication.liveRevision}` : ''}${dirty || (publication?.liveRevision != null && publication.liveRevision !== w.editorial_revision) ? ' · Private unpublished edits' : ''}`
+        : 'Not publicly visible'}{w?.status === 'archived' ? ' · Read only' : ''}</p>
     </div>
     <div className="editor-toolbar-actions">
       {formId && <button className="button secondary" type="submit" form={formId} aria-label="Save draft" disabled={busy || pending || stale || (!!w && !dirty)}><ActionIcon action="save" />{busy ? 'Saving…' : 'Save'}</button>}
       {w?.status === 'draft' && !admin && actionButton('submit', true)}
       {admin && editableStatus && <>{actionButton('approve-publish', true)}{actionButton('approve-schedule')}</>}
+      {admin && !returnToEditor && w?.status === 'review' && actionButton('reject')}
       <details className="editor-more" ref={more} onKeyDown={event => {
         if (event.key === 'Escape' && !dialog.current?.open && !event.currentTarget.querySelector('dialog[open]')) { event.preventDefault(); more.current?.removeAttribute('open'); more.current?.querySelector('summary')?.focus(); }
       }}><summary className="button secondary">More <ActionIcon action="more" /></summary>
         <div className="editor-more-panel" aria-label="More editor actions">
           {admin && w?.status === 'draft' && actionButton('submit')}
-          {admin && w?.status === 'review' && <>{actionButton('approve')}{actionButton('reject')}</>}
+          {admin && w?.status === 'review' && <>{actionButton('approve')}{returnToEditor && actionButton('reject')}</>}
           {admin && w?.status === 'scheduled' && actionButton('cancel-schedule')}
           {admin && w?.live_release_id && actionButton('unpublish')}
           {admin && w && w.status !== 'archived' && actionButton('archive')}
@@ -130,7 +148,10 @@ export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderato
         </div>
       </details>
     </div>
-    {dirty && w && <p className="editor-toolbar-hint">Save your changes before submitting or publishing.</p>}
+    {dirty && <p className="editor-toolbar-hint" id={`${dialogId}-save-hint`}>Save your changes before submitting or publishing.</p>}
+    {imagePending&&<p className="editor-toolbar-hint">Image approval needed before publishing. Review it in the editor.</p>}
+    {publication?.scheduledAt && <p className="editor-toolbar-hint">Scheduled: {formatTorontoDateTime(publication.scheduledAt)} (Toronto time). {w?.live_release_id ? 'The live revision stays public until replacement.' : 'Not public until released.'}</p>}
+    {publication?.approvedBy && !publication.scheduledAt && <p className="editor-toolbar-hint">Revision {w?.editorial_revision} approved by {publication.approvedBy}{publication.approvedAt ? ` · ${formatTorontoDateTime(publication.approvedAt)} (Toronto time)` : ''}.</p>}
     {stale && <p className="studio-field-error" role="alert">This revision changed. Your edits are preserved; compare with the latest saved copy before reloading.</p>}
     {active && <dialog className="draft-delete-dialog editor-action-dialog" ref={dialog} aria-labelledby={dialogId} aria-describedby={`${dialogId}-description`}
       onCancel={event => { if (pending) event.preventDefault(); }}
@@ -157,7 +178,7 @@ export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderato
         {active === 'reject' && <><label htmlFor={`${dialogId}-explanation`}>Explanation (optional)</label><textarea id={`${dialogId}-explanation`} name="explanation" maxLength={2000} /></>}
         {fetcher.data?.message && attempted === active && <p className="studio-message" role="alert" ref={feedback} tabIndex={-1}>{fetcher.data.message}</p>}
         <div className="studio-actions"><button type="button" ref={cancel} className="button secondary" disabled={pending} onClick={() => dialog.current?.close()}>Cancel</button>
-          <button className={`button ${destructive ? 'draft-delete-confirm' : 'primary'}`} disabled={disabled}>{pending ? 'Working…' : labels[active]}</button></div>
+          <button className={`button ${destructive || active === 'reject' ? 'draft-delete-confirm' : 'primary'}`} disabled={disabled}>{pending ? 'Working…' : labels[active]}</button></div>
       </fetcher.Form>}
     </dialog>}
   </header>;

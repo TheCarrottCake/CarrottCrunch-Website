@@ -1,3 +1,5 @@
+import {PendingImagePreview} from './content-image-upload';
+import {FeaturedImageField,PrivateFeaturedPreview} from './featured-image-field';
 import { EditorToolbar, type EditorToolbarContext } from './editor-toolbar';
 import { useState } from 'react';
 import { Form, useNavigation } from 'react-router';
@@ -65,7 +67,9 @@ export function EventEditor({ initial, csrf, now, errors = {}, message, conflict
 }) {
   const [values, setValues] = useState(initial);
   const navigation = useNavigation();
+  const [imageBusy,setImageBusy]=useState(false);
   const change = (name: keyof EventValues, value: string) => setValues(current => ({ ...current, [name]: value,
+    ...(name === 'featuredImageId' ? { pendingImageId: '' } : name === 'pendingImageId' ? { featuredImageId: '' } : {}),
     ...(name === 'startLocal' ? { startOccurrence: '' } : {}), ...(name === 'endLocal' ? { endOccurrence: '' } : {}),
   }));
   let timing: { starts_at: number; ends_at: number } | undefined, timingError = '';
@@ -78,7 +82,7 @@ export function EventEditor({ initial, csrf, now, errors = {}, message, conflict
   const summary = timing ? eventScheduleSummary(timing.starts_at, timing.ends_at) : '';
   const dirty = !toolbar?.workflow || JSON.stringify(values) !== JSON.stringify(savedValues ?? initial);
   return <>
-    <EditorToolbar {...toolbar} key={toolbar?.workflow?.version} title={values.title || (toolbar?.workflow ? "Edit community event" : "New community event")} kind="event" csrf={csrf} formId="event-editor-form" dirty={dirty} conflict={conflict} busy={navigation.state !== "idle"} />
+    <EditorToolbar {...toolbar} key={toolbar?.workflow?.version} title={values.title || (toolbar?.workflow ? "Edit community event" : "New community event")} kind="event" csrf={csrf} formId="event-editor-form" dirty={dirty} conflict={conflict} imagePending={!!values.pendingImageId} busy={navigation.state !== "idle" || imageBusy} />
     {message && <div className="studio-message" role="alert" tabIndex={-1}><p>{message}</p>
       {conflict && <p>Open the latest draft in another tab to compare. Copy your changes before reloading; reloading replaces them with the saved version.</p>}
     </div>}
@@ -90,6 +94,7 @@ export function EventEditor({ initial, csrf, now, errors = {}, message, conflict
         <label htmlFor="event-title">Title</label>
         <input id="event-title" name="title" required maxLength={160} value={values.title} aria-invalid={!!errors.title} aria-describedby="event-title-error" onChange={event => change('title', event.target.value)} />
         <p className="studio-field-error" id="event-title-error">{errors.title}</p>
+        <FeaturedImageField pendingId={values.pendingImageId||''} onPendingChange={id=>change('pendingImageId',id)} onBusyChange={setImageBusy} role={toolbar?.role} value={values.featuredImageId||''} onChange={id=>change('featuredImageId',id)} csrf={csrf} error={errors.featuredImageId||errors.pendingImageId}/>
         <label htmlFor="event-body">Description / Markdown body</label>
         <textarea id="event-body" name="bodyText" required maxLength={40000} rows={12} value={values.bodyText} aria-invalid={!!errors.bodyText} aria-describedby="event-body-help event-body-error" onChange={event => change('bodyText', event.target.value)} />
         <p className="muted" id="event-body-help">Supports headings, emphasis, code, lists and safe links. HTML and embeds stay plain text.</p>
@@ -97,11 +102,10 @@ export function EventEditor({ initial, csrf, now, errors = {}, message, conflict
         <Schedule {...{ values, errors, change }} />
         <p className={summary ? 'event-schedule-summary' : 'studio-field-error'} aria-live="polite">{summary || timingError}</p>
         {errors.revision && <p className="studio-field-error">{errors.revision}</p>}
-        <p className="muted">Saving updates the private working copy. Publishing uses only a saved revision.</p>
       </Form>
       <section className="public-card studio-preview" aria-labelledby="event-preview-heading">
         <span className="micro orange">PRIVATE DRAFT PREVIEW</span><h2 id="event-preview-heading">Event preview</h2>
-        <article>
+        <PendingImagePreview id={values.pendingImageId}/><PrivateFeaturedPreview value={values.featuredImageId}/><article>
           {timing && <span className="micro orange">{eventStatus({ ...timing, timezone: EVENT_TIMEZONE, event_state: eventState }, now)}</span>}
           <h3 className="studio-preview-title">{values.title || 'Your event title'}</h3>
           <p className={summary ? 'event-time' : 'studio-field-error'}>{summary || timingError}</p>

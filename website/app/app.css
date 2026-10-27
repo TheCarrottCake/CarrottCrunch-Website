@@ -247,7 +247,7 @@
 .editor-action-dialog .studio-actions { gap:8px;margin-top:8px; }
 .editor-action-dialog .draft-delete-title { margin-top:8px; }
 .editor-toolbar + .studio-message { margin-bottom:20px; }
-.studio-form :is(input,textarea,select) { scroll-margin-top:280px; }
+.studio-workspace :is(input,textarea,select,summary,[tabindex]) { scroll-margin-top:calc(var(--editor-toolbar-height, 280px) + 28px); }
 @media(max-width:600px) {
  .editor-toolbar { top:8px;padding:12px;gap:10px; }
  .editor-toolbar-heading { flex-basis:100%; }
@@ -259,3 +259,18 @@
 @media(max-width:360px) {
  .editor-toolbar-actions>.button { padding-inline:8px;gap:5px; }
 }
+
+/* Shared Content Studio V2 fields stay readable within the dark workspace. */
+.studio-form { min-width:0; }
+.studio-form .public-card { min-width:0;padding:clamp(16px,3vw,28px); }
+.studio-form label { display:block; }
+.studio-form input[type=checkbox] { width:1.15rem;min-height:1.15rem;margin-right:.5rem;vertical-align:middle; }
+.studio-form :is(input,textarea,select) { max-width:100%; }
+.studio-collection-item { display:grid;gap:12px; }
+.studio-collection-item .upload-local-preview { max-height:240px;object-fit:contain; }
+.studio-preview section { margin-top:24px; }
+.studio-actions { flex-wrap:wrap; }
+.media-picker .studio-form { display:grid;gap:12px; }
+.media-picker .studio-form input { background:var(--page-bg);color:var(--text); }
+
+.showcase--published .landscape { background-size:cover;background-position:center;background-repeat:no-repeat;transform:none; }

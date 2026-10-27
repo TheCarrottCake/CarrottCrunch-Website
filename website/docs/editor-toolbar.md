@@ -1,4 +1,18 @@
+> **Content Studio V2:** For the current direct-publishing workflow and shared media architecture, see [content-studio-v2.md](content-studio-v2.md). Approval instructions below describe the retained historical implementation.
+
 # 05C editor toolbar cleanup
+
+## Final UX polish
+
+The existing shared toolbar and workflow transactions remain in place. The polish pass adds explicit Working revision / Live revision labels, public visibility, and a Private unpublished edits indicator (including unsaved edits to the current live revision). Approval name/time and pending publication time come from private, staff-authenticated loader reads. Dates use Toronto formatting; announcement revision history no longer displays raw ISO timestamps.
+
+Save feedback distinguishes a private saved working copy from an unchanged live release. Workflow feedback names the resulting published, scheduled, approved or pending-review state. Repeated lower saving instructions and the duplicate schedule summary were removed. Approved/published labels retain Leaf Sage and text/checkmarks; other states have explicit text labels. Primary actions remain orange. The toolbar measures its height so focused fields scroll below it as controls wrap; mobile titles use one visual line with the full title retained in the title attribute.
+
+The review queue now uses compact cards with Announcement/Event, Pending review, saved revision, submitter and Toronto submission time. Native keyboard-accessible disclosures preview an announcement summary or a bounded 1,200-character event excerpt through the restricted content renderer. Full saved content stays available on the decision screen. Preview and decision links include the title/revision in their accessible names. Empty, filtered and paginated queues have separate guidance. Administrators/Owners see Reject directly in the saved-revision toolbar; Approve Only remains in More, alongside the existing primary Approve & Publish and Schedule Publish actions. Optional rejection explanations are unchanged.
+
+Validation: 91 tests passed in the full serial suite, followed by all four workflow UI tests including the added queue preview/empty-state regression. Typecheck, build, built-route checks, local publication Worker/Cron checks and Media Library Worker checks passed. Isolated headless Edge fixtures passed both editors at 1440/390/320px, sticky/menu/dialog bounds, keyboard focus, cancellation, Toronto ambiguity, retained validation values, duplicate-submission prevention and unsaved publication blocking. Screenshots were inspected. These fixtures do not replace an authenticated local staff session or a screen-reader review.
+
+Remaining browser checklist: sign in locally as each staff role; save/submit an announcement and event; review, reject with an explanation, then approve; publish revision 1 and save private revision 2; check the live/working labels and unchanged public content; schedule/cancel a replacement across DST; check screen-reader announcements and keyboard focus after successful redirects. Use local test content only. No dependencies, migrations, production operations or changes to workflow mutation/Cron authorization were introduced.
 
 Both announcement and event editors now use `EditorToolbar`. Save is associated with the existing editor form by its form ID; no forms are nested. The title, workflow status, exact saved editorial revision and saved/unsaved state remain in a sticky cream toolbar. It stays in the main content column on desktop and scrolls below the static mobile navigation. Buttons wrap at narrow widths; More uses a bounded mobile panel.
 

@@ -9,7 +9,7 @@ export type ControlDashboardProps = {
   role: StaffRole;
   csrf: string;
   children?: ReactNode;
-  section: 'Overview' | 'Media Library' | 'News & Events';
+  section: 'Overview' | 'Media Library' | 'News & Events' | 'Posts & Events' | 'Homepage' | 'Community Gallery';
   counts?: {pending:number|null;overdue:number|null}|null;
 };
 
@@ -52,8 +52,8 @@ export function ControlDashboard({ identity, role, csrf, children, section, coun
         </header>}
         {children || (isOverview && <><section className="dashboard-notice" aria-labelledby="dashboard-status-title">
           <h2 id="dashboard-status-title">A little patience. Something good is growing.</h2>
-          <p>Announcement and event drafting, review, publication and the private Media Library are available.</p>
-          {counts && <p><Link className="text-link" to="/control/review">{counts.pending||0} awaiting review</Link> · <Link className="text-link" to="/control/news?status=scheduled">{counts.overdue||0} overdue scheduled releases</Link></p>}
+          <p>Create posts, events, homepage slides and Community Creations with one shared Media Library.</p>
+
         </section>
         <section aria-labelledby="dashboard-tools-title" className="dashboard-tools">
           <div className="dashboard-section-heading"><h2 id="dashboard-tools-title">Your tools</h2><span className="muted">Available navigation reflects your staff role.</span></div>

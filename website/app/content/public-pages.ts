@@ -38,11 +38,11 @@ export const publicPages = {
   gallery: {
   "title": "Gallery",
   "eyebrow": "Small blocks. Big imagination.",
-  "description": "A future home for CarrottCrunch community screenshots and creative highlights.",
+  "description": "CarrottCrunch community screenshots and creative highlights.",
   "sections": [
     {
       "title": "Community screenshots",
-      "text": "No approved community screenshots are published here yet. The illustrated previews on the homepage are concept artwork, not actual community builds.",
+      "text": "No community screenshots are published here yet. The illustrated previews on the homepage are concept artwork, not actual community builds.",
       "placeholder": true
     },
     {

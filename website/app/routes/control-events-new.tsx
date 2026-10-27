@@ -1,5 +1,6 @@
 import { data } from 'react-router';
-import type { Route } from './+types/control-events-new';
+import type {LegacyArgs,LegacyData} from '../lib/legacy-route-types';
+namespace Route { export type LoaderArgs=LegacyArgs;export type ActionArgs=LegacyArgs;export type ComponentProps={loaderData:LegacyData<Awaited<ReturnType<typeof loader>>>;actionData?:LegacyData<Awaited<ReturnType<typeof action>>>;};export type MetaArgs={loaderData?:LegacyData<Awaited<ReturnType<typeof loader>>>};}
 import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
 import { studioSession, studioIdentity, studioFailure, studioHeaders } from '../lib/content-studio.server';
 import { eventAction, type EventValues } from '../lib/event-studio.server';

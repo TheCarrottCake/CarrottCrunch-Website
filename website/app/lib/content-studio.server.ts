@@ -1,3 +1,4 @@
+import { MediaError } from './media-db.server.ts';
 import { requireContentDatabase } from './content-db.server.ts';
 import { AuthError, requireStaff, requireStaffAction, staffAuthHeaders, staffCsrfToken, type AuthEnvironment } from './staff-auth.server.ts';
 
@@ -16,8 +17,8 @@ export async function studioIdentity(session: Awaited<ReturnType<typeof requireS
 }
 export function studioFailure(error: unknown) {
   if (error instanceof Response) return error;
-  const status = error instanceof StudioError ? error.status : error instanceof AuthError && ['denied', 'csrf'].includes(error.code) ? 403 : 503;
-  const message = error instanceof StudioError ? error.message : status === 403 ? 'An authorized staff account and a valid same-origin request are required.' : 'Content Studio is unavailable. Check local database migrations or try again later.';
+  const status = (error instanceof StudioError || error instanceof MediaError) ? error.status : error instanceof AuthError && ['denied', 'csrf'].includes(error.code) ? 403 : 503;
+  const message = (error instanceof StudioError || error instanceof MediaError) ? error.message : status === 403 ? 'An authorized staff account and a valid same-origin request are required.' : 'Content Studio is unavailable. Check local database migrations or try again later.';
   return new Response(message, { status, headers: studioHeaders });
 }
 

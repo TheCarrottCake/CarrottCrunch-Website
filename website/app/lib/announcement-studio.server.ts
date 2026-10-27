@@ -1,18 +1,21 @@
+import { validFeaturedId } from './featured-image.ts';
 import { createAnnouncementDraft } from './content-db.server.ts';
 import { data, redirect } from 'react-router';
 import type { AuthEnvironment } from './staff-auth.server.ts';
 import { StudioError, studioHeaders, studioSession, studioIdentity, studioFailure, draftHistory } from './content-studio.server.ts';
 export { StudioError, studioHeaders, studioSession, studioIdentity, studioFailure } from './content-studio.server.ts';
 
-export type EditorValues = { title: string; summary: string; bodyText: string; revision: string };
+export type EditorValues = { featuredImageId?: string; pendingImageId?: string; title: string; summary: string; bodyText: string; revision: string };
 export type EditorErrors = Partial<Record<keyof EditorValues | 'form', string>>;
 export type DraftAnnouncement = {
-  id: string; slug: string; title: string; summary: string; body_text: string;
+  featured_image_id: string | null; pending_image_id: string | null; id: string; slug: string; title: string; summary: string; body_text: string;
   state: 'draft'; created_at: number; updated_at: number; revision: number;
   author: string | null; last_editor: string | null;
 };
 const eligible = "c.kind='announcement' AND c.state='draft' AND c.published_at IS NULL AND c.is_fixture=0";
 const columns = `c.id,c.slug,c.title,a.summary,c.body_text,c.state,c.created_at,c.updated_at,
+  (SELECT json_extract(snapshot_json,'$.featured_image_id') FROM content_revisions WHERE content_id=c.id ORDER BY revision DESC LIMIT 1) AS featured_image_id,
+  (SELECT json_extract(snapshot_json,'$.pending_image_id') FROM content_revisions WHERE content_id=c.id ORDER BY revision DESC LIMIT 1) AS pending_image_id,
   (SELECT MAX(revision) FROM content_revisions WHERE content_id=c.id) AS revision,
   (SELECT COALESCE(NULLIF(u.display_name,''),u.username) FROM content_revisions r LEFT JOIN site_users u ON u.discord_user_id=r.actor_id WHERE r.content_id=c.id ORDER BY r.revision ASC LIMIT 1) AS author,
   (SELECT COALESCE(NULLIF(u.display_name,''),u.username) FROM content_revisions r LEFT JOIN site_users u ON u.discord_user_id=r.actor_id WHERE r.content_id=c.id ORDER BY r.revision DESC LIMIT 1) AS last_editor`;
@@ -32,8 +35,12 @@ export async function editorForm(request: Request): Promise<{ values: EditorValu
   const bytes = new Uint8Array(length); let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
   const form = new URLSearchParams(new TextDecoder().decode(bytes));
-  const values = { title: form.get('title') ?? '', summary: form.get('summary') ?? '', bodyText: form.get('bodyText') ?? '', revision: form.get('revision') ?? '' };
+  const values: EditorValues = { title: form.get('title') ?? '', summary: form.get('summary') ?? '', bodyText: form.get('bodyText') ?? '', revision: form.get('revision') ?? '' };
   const errors: EditorErrors = {};
+  if(form.has('pendingImageId'))values.pendingImageId=form.get('pendingImageId')||'';
+  if(form.has('featuredImageId'))values.featuredImageId=form.get('featuredImageId')||'';
+  if(form.getAll('pendingImageId').length>1)errors.pendingImageId='Supply one uploaded image.';
+  if(form.getAll('featuredImageId').length>1)errors.featuredImageId='Supply one featured image.';
   for (const name of ['title', 'summary', 'bodyText', 'revision'] as const) if (form.getAll(name).length !== 1) errors[name] = 'Supply this field exactly once.';
   if (form.getAll('intent').length !== 1 || form.get('intent') !== 'save') errors.form = 'Only saving announcement drafts is supported.';
   Object.assign(errors, validateEditor(values));
@@ -41,6 +48,8 @@ export async function editorForm(request: Request): Promise<{ values: EditorValu
 }
 export function validateEditor(values: EditorValues): EditorErrors {
   const errors: EditorErrors = {};
+  if(!validFeaturedId(values.pendingImageId||'') || (values.pendingImageId && values.featuredImageId))errors.pendingImageId='Choose one featured image.';
+  if (!validFeaturedId(values.featuredImageId||'')) errors.featuredImageId='Choose a valid featured image.';
   if (!values.title.trim() || values.title.length > 160) errors.title = 'Enter a title of 1–160 characters.';
   if (!values.summary.trim() || values.summary.length > 600) errors.summary = 'Enter a summary of 1–600 characters.';
   if (!values.bodyText.trim() || values.bodyText.length > 40000) errors.bodyText = 'Enter a Markdown body of 1–40,000 characters.';
@@ -67,13 +76,13 @@ export async function saveAnnouncementDraft(db: D1Database, id: string | null, v
   if (Object.keys(validateEditor(values)).length) throw new StudioError('Correct the highlighted announcement fields.');
   if (!id) {
     if (values.revision !== '0') throw new StudioError('Reload the new announcement form.', 409);
-    return createAnnouncementDraft(db, { slug: `announcement-${crypto.randomUUID()}`, title: values.title, summary: values.summary, bodyText: values.bodyText, actorId });
+    return createAnnouncementDraft(db, { slug: `announcement-${crypto.randomUUID()}`, title: values.title, summary: values.summary, bodyText: values.bodyText, featuredImageId: values.featuredImageId, pendingImageId:values.pendingImageId, actorId });
   }
   const current = await getAnnouncementDraft(db, id);
   const revision = Number(values.revision);
   if (revision !== current.revision) throw new StudioError('This draft changed in another session. Your text is preserved. Compare with the latest saved draft before reloading.', 409);
   const now = Math.max(Date.now(), current.updated_at);
-  const snapshot = { id, kind: 'announcement', slug: current.slug, title: values.title, summary: values.summary,
+  const snapshot = { pending_image_id:values.pendingImageId === undefined ? current.pending_image_id : values.pendingImageId || null, featured_image_id:values.featuredImageId === undefined ? current.featured_image_id : values.featuredImageId || null, id, kind: 'announcement', slug: current.slug, title: values.title, summary: values.summary,
     body_text: values.bodyText, state: 'draft', is_fixture: 0, created_at: current.created_at, updated_at: now, published_at: null };
   const details = JSON.stringify({ state: 'draft', revision: revision + 1 });
   // The guarded update and immediately following audit assertion are in ONE D1 transaction.

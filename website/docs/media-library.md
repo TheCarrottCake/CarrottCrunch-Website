@@ -1,4 +1,8 @@
+> **Content Studio V2:** For the current direct-publishing workflow and shared media architecture, see [content-studio-v2.md](content-studio-v2.md). Approval instructions below describe the retained historical implementation.
+
 # Private Media Library (Task 04A)
+
+Editorial integration is now implemented in [Milestone 05D](editorial-media.md): separate Administrator/Owner-approved editorial consent, immutable featured-image presentations, guarded live-release delivery and working/scheduled/live reference protection. The original private preview route and existing gallery/homepage/external permission scopes remain unchanged. The sections below describe the 04A baseline; statements about future publishing or absent content-reference UI are superseded for announcement/event featured images by 05D, not for gallery or external publishing.
 
 The existing `feature/public-website-routing` implementation is preserved. `/control/media` is the first available management tool. Moderator, Administrator and Owner accounts use the existing unified Discord login, site sessions, current staff assignments and CSRF checks. Ordinary members and anonymous visitors receive no media metadata or image bytes.
 

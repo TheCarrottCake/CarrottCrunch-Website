@@ -152,3 +152,74 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 #control-main [data-workflow-status="approved"]::before,
 #control-main [data-workflow-status="published"]::before { content: "\2713 "; }
 #control-main .studio-message[role="status"] { border-left-color: var(--foliage); }
+
+/* Workflow labels remain readable without relying on status colour. */
+.workflow-status { display:inline-block;font-weight:750; }
+#control-main [data-workflow-status="review"] { color:var(--accent); }
+#control-main [data-workflow-status="scheduled"] { color:var(--text);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px; }
+#control-main [data-workflow-status="archived"] { color:var(--text-muted); }
+.workflow-reject { color:var(--field-error);border-color:var(--field-error);background:var(--surface); }
+.workflow-reject:hover:not(:disabled) { background:var(--page-bg); }
+.review-queue { gap:12px; }
+.studio-workspace .review-item { padding:18px 20px;min-width:0; }
+.studio-workspace .review-item h2 { margin:8px 0;font-size:1.15rem;overflow-wrap:anywhere; }
+.studio-workspace .review-item > p { margin:0;font-size:.85rem; }
+.review-item-meta,.review-item-actions { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+.review-item-meta { font-size:.8rem; }
+.review-item-actions { margin-top:12px;align-items:flex-start; }
+.review-preview { flex:1 1 240px;min-width:0; }
+.review-preview summary { cursor:pointer;min-height:44px;padding:10px 0;font-size:.9rem;font-weight:700; }
+.review-preview .content-body { overflow-wrap:anywhere; }
+.review-item-actions .button { min-height:44px; }
+.featured-image { margin:16px 0;max-width:100%; }
+.featured-image img { display:block;max-width:100%;width:auto;height:auto;border-radius:10px; }
+.featured-image figcaption { margin-top:8px;color:var(--text-muted);font-size:.85rem;line-height:1.6;overflow-wrap:anywhere; }
+.featured-image figcaption a { text-decoration:underline; }
+.media-selection-ready { color:var(--foliage-text); }
+.content-image-upload { margin-block:16px;min-width:0; }
+.image-dropzone { display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:20px;margin-block:12px;border:2px dashed var(--border-strong);border-radius:12px;background:var(--surface); }
+.image-dropzone > p { flex-basis:100%;font-size:.85rem; }
+.image-dropzone.is-dragging { border-color:var(--foliage-text);background:var(--page-bg); }
+.compact-image-fields { display:grid;gap:10px;min-width:0;margin-block:12px;padding:16px;border:1px solid var(--border);border-radius:10px; }
+.compact-image-fields :is(input:not([type=checkbox]),select,textarea) { width:100%;min-width:0;padding:10px;border:1px solid var(--border-strong);border-radius:6px; }
+.compact-image-fields details > label { display:grid;gap:6px;margin-block:10px; }
+.compact-image-fields summary,.pending-image-review summary { cursor:pointer;padding-block:10px; }
+.upload-local-preview,.pending-image-review > img { display:block;max-width:100%;max-height:240px;width:auto;height:auto;border-radius:8px; }
+.pending-image-review { display:grid;gap:10px;margin-block:12px;min-width:0;overflow-wrap:anywhere; }
+.pending-image-review > button { justify-self:start; }
+.pending-image-review details { padding:10px;border-left:3px solid var(--foliage);background:var(--page-bg); }
+.featured-image-field .media-checkbox { display:flex;align-items:flex-start;gap:8px;font-weight:400; }
+.featured-image-field .media-checkbox input[type=checkbox] { width:1.1rem;height:1.1rem;padding:0;margin-top:.2rem;flex-shrink:0; }
+.featured-image--card img { max-height:260px;object-fit:contain; }
+.featured-image-field { min-width:0;padding:16px;border:1px solid var(--border);border-radius:10px; }
+.featured-image-field .featured-image img { max-height:220px; }
+.featured-image-field h3 { font-size:1rem; }
+.media-picker { width:min(760px,calc(100% - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:24px;border:1px solid var(--border-strong);border-radius:16px;color:var(--text);background:var(--surface);overflow:auto; }
+.media-picker::backdrop { background:color-mix(in srgb,var(--featured) 65%,transparent); }
+.media-picker h2 { font-size:1.4rem; }
+.media-picker-search { display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,.6fr) auto;gap:8px;margin:16px 0;align-items:end; }
+.media-picker-search label { grid-row:1; }
+.media-picker-search input,.media-picker-search select { grid-row:2;min-width:0;padding:10px;border:1px solid var(--border-strong);border-radius:6px; }
+.media-picker-search button { grid-column:3;grid-row:2; }
+.media-picker-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0; }
+.media-picker-option { display:flex;flex-direction:column;align-items:start;gap:8px;min-width:0;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);text-align:left; }
+.media-picker-option img { width:100%;height:110px;object-fit:contain; }
+.media-picker-option strong,.media-picker-option span { overflow-wrap:anywhere; }
+.media-picker-option span { font-size:.8rem;line-height:1.5; }
+.media-picker-option[aria-pressed=true] { border:2px solid var(--foliage-text);background:var(--page-bg); }
+.media-picker-option[aria-disabled=true] { cursor:default; }
+.media-picker-details { padding:12px;border-left:3px solid var(--foliage);background:var(--page-bg);overflow-wrap:anywhere; }
+.media-picker-actions { position:sticky;bottom:-24px;display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px;padding:16px 0;background:var(--surface); }
+@media(max-width:600px) {
+ .media-picker { padding:16px; }
+ .media-picker-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .media-picker-search { grid-template-columns:minmax(0,1fr); }
+ .media-picker-search :is(label,input,select,button) { grid-row:auto;grid-column:auto; }
+ .media-picker-actions { bottom:-16px; }
+}
+@media(max-width:360px) { .media-picker-grid { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:600px) {
+  .studio-workspace .editor-toolbar h1 { -webkit-line-clamp:1;font-size:1.2rem; }
+  .editor-toolbar { margin-bottom:16px; }
+  .review-item-actions > .button { width:100%; }
+}

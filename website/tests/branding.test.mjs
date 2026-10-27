@@ -25,7 +25,22 @@ function artwork(source) {
 test('browser logo preserves the master C, three leaves and three crumbs exactly', () => {
   assert.equal(artwork(master).length, 7);
   assert.deepEqual(artwork(icon), artwork(master));
-  assert.deepEqual(artwork(icon).map(path => path.fill), ['#B64223', ...Array(6).fill('#F4A453')]);
+  assert.deepEqual(artwork(icon).map(path => path.fill), ['#B64223', ...Array(3).fill('#6C8056'), ...Array(3).fill('#F4A453')]);
+});
+
+test('SVG favicon uses the official artwork and accessible sage text variants meet AA', () => {
+  assert.equal(readFileSync(new URL('../public/favicon.svg', import.meta.url), 'utf8'), icon);
+  const css = readFileSync(new URL('../app/palette.css', import.meta.url), 'utf8');
+  const token = name => css.match(new RegExp(`--${name}: (#[0-9A-F]{6});`))[1];
+  const luminance = hex => {
+    const rgb = hex.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
+      .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+    return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
+  };
+  for (const [foreground, background] of [['foliage-text', 'surface'], ['foliage-text', 'page-bg'], ['foliage-on-dark', 'featured']]) {
+    const values = [luminance(token(foreground)), luminance(token(background))].sort((a, b) => b - a);
+    assert.ok((values[0] + .05) / (values[1] + .05) >= 4.5, `${foreground} on ${background} must meet AA`);
+  }
 });
 
 test('browser logo has transparent, padded bounds and no editor or external dependencies', () => {

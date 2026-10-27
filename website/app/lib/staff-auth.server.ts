@@ -2,6 +2,7 @@
 export type StaffRole = 'Moderator' | 'Administrator' | 'Owner';
 export type AuthEnvironment = {
   CONTENT_DB?: D1Database;
+  MEDIA_BUCKET?: R2Bucket;
   DISCORD_CLIENT_ID?: string;
   DISCORD_CLIENT_SECRET?: string;
   CONTROL_ORIGIN?: string;

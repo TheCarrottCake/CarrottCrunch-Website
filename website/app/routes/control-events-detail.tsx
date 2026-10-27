@@ -1,6 +1,7 @@
-import { getWorkflow } from '../lib/publication-workflow.server';
+import { getWorkflow, workflowPresentation } from '../lib/publication-workflow.server';
 import { data, Link } from 'react-router';
-import type { Route } from './+types/control-events-detail';
+import type {LegacyArgs,LegacyData} from '../lib/legacy-route-types';
+namespace Route { export type LoaderArgs=LegacyArgs;export type ActionArgs=LegacyArgs;export type ComponentProps={loaderData:LegacyData<Awaited<ReturnType<typeof loader>>>;actionData?:LegacyData<Awaited<ReturnType<typeof action>>>;};export type MetaArgs={loaderData?:LegacyData<Awaited<ReturnType<typeof loader>>>};}
 import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
 import { studioSession, studioIdentity, studioFailure, studioHeaders, draftHistory } from '../lib/content-studio.server';
 import { eventAction, getEventDraft, eventEditorValues } from '../lib/event-studio.server';
@@ -15,7 +16,8 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     const env = context.get(contentEnvironmentContext);
     const { session, db } = await studioSession(request, env, false, import.meta.env.DEV);
     const draft = await getEventDraft(db, params.eventId);
-    return data({ ...await studioIdentity(session, env), draft, workflow: await getWorkflow(db, draft.id), released: !!await db.prepare('SELECT id FROM content_releases WHERE content_id=? LIMIT 1').bind(draft.id).first(), values: eventEditorValues(draft), history: await draftHistory(db, draft.id), now: Date.now(), saved: new URL(request.url).searchParams.get('saved') === '1', updated: new URL(request.url).searchParams.get('updated') === '1' }, { headers: studioHeaders });
+    const workflow = await getWorkflow(db, draft.id);
+    return data({ ...await studioIdentity(session, env), draft, workflow, publication: await workflowPresentation(db, workflow), released: !!await db.prepare('SELECT id FROM content_releases WHERE content_id=? LIMIT 1').bind(draft.id).first(), values: eventEditorValues(draft), history: await draftHistory(db, draft.id), now: Date.now(), saved: new URL(request.url).searchParams.get('saved') === '1', updated: new URL(request.url).searchParams.get('updated') === '1' }, { headers: studioHeaders });
   } catch (error) { throw studioFailure(error); }
 }
 export async function action({ request, context, params }: Route.ActionArgs) {
@@ -24,9 +26,9 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 export default function EditEvent({ loaderData: d, actionData }: Route.ComponentProps) {
   const conflict = actionData?.status === 409;
   return <ControlDashboard {...d} section="News & Events"><section className="studio-workspace" aria-labelledby="edit-event-heading">
-    {d.updated && <p className="studio-message" role="status">Workflow updated.</p>}
-    {d.saved && !actionData && <p className="studio-message" role="status">Draft saved. It remains private.</p>}
-    <EventEditor key={JSON.stringify(actionData ?? `${d.draft.id}:${d.draft.revision}`)} initial={actionData?.values ?? d.values} savedValues={d.values} toolbar={{ workflow:d.workflow, role:d.role, released:d.released, headingId:"edit-event-heading", history:(<section className="public-card studio-history" aria-labelledby="event-history-heading"><h2 id="event-history-heading">Recent revisions</h2><p className="muted">Up to 20 recent saves. Earlier revisions and audit records remain stored.</p>
+    {d.updated && <p className="studio-message" role="status">{d.workflow.status === 'published' ? 'Saved revision published.' : d.workflow.status === 'scheduled' ? 'Publication scheduled.' : d.workflow.status === 'approved' ? 'Revision approved. Approval alone does not publish.' : d.workflow.status === 'review' ? 'Saved revision submitted for review.' : 'Working revision updated.'}</p>}
+    {d.saved && !actionData && <p className="studio-message" role="status">Working revision saved. {d.workflow.live_release_id ? `Live revision ${d.publication.liveRevision} remains unchanged.` : 'Not publicly visible.'}</p>}
+    <EventEditor key={JSON.stringify(actionData ?? `${d.draft.id}:${d.draft.revision}`)} initial={actionData?.values ?? d.values} savedValues={d.values} toolbar={{ workflow:d.workflow, publication:d.publication, role:d.role, released:d.released, headingId:"edit-event-heading", history:(<section className="public-card studio-history" aria-labelledby="event-history-heading"><h2 id="event-history-heading">Recent revisions</h2><p className="muted">Up to 20 recent saves. Earlier revisions and audit records remain stored.</p>
       <ol>{d.history.map(revision => <li key={revision.revision}><strong>Revision {revision.revision}</strong> · {revision.author || 'Staff member (name unavailable)'} · <time dateTime={new Date(revision.created_at).toISOString()}>{formatTorontoDateTime(revision.created_at)}</time></li>)}</ol>
     </section>) }} csrf={d.csrf} now={d.now} errors={actionData?.errors} message={actionData?.message} conflict={conflict} eventState={d.draft.event_state} />
     {actionData && <a className="text-link" href={`/control/events/${d.draft.id}`} target="_blank" rel="noopener noreferrer">Open latest saved draft in a new tab</a>}

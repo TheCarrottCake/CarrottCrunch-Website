@@ -1,4 +1,5 @@
-import type { Route } from './+types/control-draft-delete';
+import type {LegacyArgs,LegacyData} from '../lib/legacy-route-types';
+namespace Route { export type LoaderArgs=LegacyArgs;export type ActionArgs=LegacyArgs;export type ComponentProps={loaderData:never;actionData?:LegacyData<Awaited<ReturnType<typeof action>>>;};export type MetaArgs={loaderData?:never};}
 import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
 import { deleteDraftAction } from '../lib/draft-delete.server';
 import { studioHeaders } from '../lib/content-studio.server';

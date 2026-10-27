@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { data, Form, Link, useRevalidator } from 'react-router';
-import type { Route } from './+types/control-media';
+import type {LegacyArgs,LegacyData} from '../lib/legacy-route-types';
+namespace Route { export type LoaderArgs=LegacyArgs;export type ActionArgs=LegacyArgs;export type ComponentProps={loaderData:LegacyData<Awaited<ReturnType<typeof loader>>>;};export type MetaArgs={loaderData?:LegacyData<Awaited<ReturnType<typeof loader>>>};}
 import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
 import { authorizeMedia, mediaFailure, mediaHeaders } from '../lib/media-access.server';
 import { listMedia, requireMediaStorage } from '../lib/media-db.server';

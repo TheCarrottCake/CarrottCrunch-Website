@@ -1,17 +1,20 @@
+import { validFeaturedId } from './featured-image.ts';
 import { data, redirect } from 'react-router';
 import { createEventDraft } from './content-db.server.ts';
 import { StudioError, studioSession, studioFailure, studioHeaders } from './content-studio.server.ts';
 import type { AuthEnvironment } from './staff-auth.server.ts';
 import { resolveEventTime, reopenEventTime, EVENT_TIMEZONE } from './event-time.ts';
 
-export type EventValues = { title: string; bodyText: string; startLocal: string; endLocal: string; timezone: string; startOccurrence: string; endOccurrence: string; revision: string };
+export type EventValues = { featuredImageId?: string; pendingImageId?: string; title: string; bodyText: string; startLocal: string; endLocal: string; timezone: string; startOccurrence: string; endOccurrence: string; revision: string };
 export type EventErrors = Partial<Record<keyof EventValues | 'form', string>>;
 export type DraftEvent = {
-  id: string; slug: string; title: string; body_text: string; state: 'draft'; created_at: number; updated_at: number;
+  featured_image_id: string | null; pending_image_id: string | null; id: string; slug: string; title: string; body_text: string; state: 'draft'; created_at: number; updated_at: number;
   revision: number; author: string | null; last_editor: string | null; starts_at: number; ends_at: number; timezone: string; event_state: 'active' | 'cancelled';
 };
 const eligible = "c.kind='event' AND c.state='draft' AND c.published_at IS NULL AND c.is_fixture=0";
 const columns = `c.id,c.slug,c.title,c.body_text,c.state,c.created_at,c.updated_at,e.starts_at,e.ends_at,e.timezone,e.event_state,
+  (SELECT json_extract(snapshot_json,'$.featured_image_id') FROM content_revisions WHERE content_id=c.id ORDER BY revision DESC LIMIT 1) AS featured_image_id,
+  (SELECT json_extract(snapshot_json,'$.pending_image_id') FROM content_revisions WHERE content_id=c.id ORDER BY revision DESC LIMIT 1) AS pending_image_id,
   (SELECT MAX(revision) FROM content_revisions WHERE content_id=c.id) AS revision,
   (SELECT COALESCE(NULLIF(u.display_name,''),u.username) FROM content_revisions r LEFT JOIN site_users u ON u.discord_user_id=r.actor_id WHERE r.content_id=c.id ORDER BY r.revision ASC LIMIT 1) AS author,
   (SELECT COALESCE(NULLIF(u.display_name,''),u.username) FROM content_revisions r LEFT JOIN site_users u ON u.discord_user_id=r.actor_id WHERE r.content_id=c.id ORDER BY r.revision DESC LIMIT 1) AS last_editor`;
@@ -22,6 +25,8 @@ class EventValidationError extends StudioError {
 }
 export function validateEvent(values: EventValues, preserved?: Pick<EventValues, 'startLocal' | 'endLocal'>, checkIncrements = true) {
   const errors: EventErrors = {};
+  if(!validFeaturedId(values.pendingImageId||'') || (values.pendingImageId && values.featuredImageId))errors.pendingImageId='Choose one featured image.';
+  if (!validFeaturedId(values.featuredImageId||'')) errors.featuredImageId='Choose a valid featured image.';
   if (!values.title.trim() || values.title.length > 160) errors.title = 'Enter a title of 1–160 characters.';
   if (!values.bodyText.trim() || values.bodyText.length > 40000) errors.bodyText = 'Enter a description of 1–40,000 characters.';
   if (!/^(0|[1-9][0-9]*)$/.test(values.revision) || !Number.isSafeInteger(Number(values.revision))) errors.revision = 'Reload the draft before saving.';
@@ -57,6 +62,8 @@ export async function eventForm(request: Request) {
   const form = new URLSearchParams(new TextDecoder().decode(bytes));
   const fields = ['title', 'bodyText', 'startLocal', 'endLocal', 'timezone', 'startOccurrence', 'endOccurrence', 'revision'] as const;
   const values = Object.fromEntries(fields.map(name => [name, form.get(name) ?? ''])) as EventValues;
+  if(form.has('pendingImageId'))values.pendingImageId=form.get('pendingImageId')||'';
+  if(form.has('featuredImageId'))values.featuredImageId=form.get('featuredImageId')||'';
   values.timezone = EVENT_TIMEZONE;
   const dates = ['eventDate', 'startTime', 'endTime', 'endDate'] as const;
   const parts = Object.fromEntries(dates.map(name => [name, form.get(name) ?? '']));
@@ -69,6 +76,8 @@ export async function eventForm(request: Request) {
   }
   const { errors } = validateEvent(values, undefined, false);
   for (const name of fields.filter(name => name !== 'timezone')) if (form.getAll(name).length !== 1) errors[name] = 'Supply this field exactly once.';
+  if(form.getAll('pendingImageId').length>1)errors.pendingImageId='Supply one uploaded image.';
+  if(form.getAll('featuredImageId').length>1)errors.featuredImageId='Supply one featured image.';
   for (const name of dates) if (form.getAll(name).length !== 1) errors.form = 'Please use the supplied date and time controls.';
   if (form.getAll('differentEndDate').length > 1 || (form.has('differentEndDate') && !differentEndDate)) errors.form = 'Please choose whether the event ends on another day.';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(parts.eventDate) || !/^\d{2}:\d{2}$/.test(parts.startTime)) errors.startLocal = 'Please choose a date and start time.';
@@ -94,7 +103,7 @@ export async function getEventDraft(db: D1Database, id: string): Promise<DraftEv
 export function eventEditorValues(draft: DraftEvent): EventValues {
   const start = reopenEventTime(draft.starts_at, EVENT_TIMEZONE), end = reopenEventTime(draft.ends_at, EVENT_TIMEZONE);
   const inputLocal = (local: string) => local.endsWith(':00.000') ? local.slice(0, 16) : local;
-  return { title: draft.title, bodyText: draft.body_text, startLocal: inputLocal(start.local), endLocal: inputLocal(end.local), timezone: EVENT_TIMEZONE,
+  return { ...(draft.pending_image_id ? {pendingImageId:draft.pending_image_id}:{}), ...(draft.featured_image_id ? {featuredImageId:draft.featured_image_id}:{}), title: draft.title, bodyText: draft.body_text, startLocal: inputLocal(start.local), endLocal: inputLocal(end.local), timezone: EVENT_TIMEZONE,
     startOccurrence: start.occurrence, endOccurrence: end.occurrence, revision: String(draft.revision) };
 }
 
@@ -105,13 +114,13 @@ export async function saveEventDraft(db: D1Database, id: string | null, values: 
   if (Object.keys(errors).length || startsAt === undefined || endsAt === undefined) throw new EventValidationError(errors);
   if (!id) {
     if (values.revision !== '0') throw new StudioError('Reload the new event form.', 409);
-    return createEventDraft(db, { slug: `event-${crypto.randomUUID()}`, title: values.title, bodyText: values.bodyText, actorId, startsAt, endsAt, timezone: values.timezone });
+    return createEventDraft(db, { slug: `event-${crypto.randomUUID()}`, title: values.title, bodyText: values.bodyText, actorId, startsAt, endsAt, timezone: values.timezone, featuredImageId:values.featuredImageId, pendingImageId:values.pendingImageId });
   }
   if (!current) throw new StudioError('Event draft not found.', 404);
   const revision = Number(values.revision);
   if (revision !== current.revision) throw new StudioError('This draft changed in another session. Your event fields are preserved. Compare with the latest saved draft before reloading.', 409);
   const now = Math.max(Date.now(), current.updated_at);
-  const snapshot = { id, kind: 'event', slug: current.slug, title: values.title, body_text: values.bodyText,
+  const snapshot = { pending_image_id:values.pendingImageId === undefined ? current.pending_image_id : values.pendingImageId || null, featured_image_id:values.featuredImageId === undefined ? current.featured_image_id : values.featuredImageId || null, id, kind: 'event', slug: current.slug, title: values.title, body_text: values.bodyText,
     state: 'draft', is_fixture: 0, created_at: current.created_at, updated_at: now, published_at: null,
     starts_at: startsAt, ends_at: endsAt, timezone: values.timezone, event_state: current.event_state };
   // Guard the content revision/state and assert the update inside the same D1 transaction.

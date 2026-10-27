@@ -1,5 +1,6 @@
 import { data, Form, Link } from 'react-router';
-import type { Route } from './+types/control-news';
+import type {LegacyArgs,LegacyData} from '../lib/legacy-route-types';
+namespace Route { export type LoaderArgs=LegacyArgs;export type ActionArgs=LegacyArgs;export type ComponentProps={loaderData:LegacyData<Awaited<ReturnType<typeof loader>>>;};export type MetaArgs={loaderData?:LegacyData<Awaited<ReturnType<typeof loader>>>};}
 import { contentEnvironmentContext } from '../lib/cloudflare-context.server';
 import { listAnnouncementDrafts, studioFailure, studioHeaders, studioIdentity, studioSession } from '../lib/announcement-studio.server';
 import { listEventDrafts } from '../lib/event-studio.server';
