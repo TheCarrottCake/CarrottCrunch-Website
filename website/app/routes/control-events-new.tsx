@@ -22,7 +22,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function NewEvent({ loaderData: d, actionData }: Route.ComponentProps) {
   const values: EventValues = actionData?.values ?? { title: '', bodyText: '', startLocal: '', endLocal: '', timezone: EVENT_TIMEZONE, startOccurrence: '', endOccurrence: '', revision: '0' };
   return <ControlDashboard {...d} section="News & Events"><section className="studio-workspace" aria-labelledby="new-event-heading">
-    <h1 id="new-event-heading">New community event</h1><p>Start with a private event draft. Nothing saved here appears on the public website.</p>
-    <EventEditor key={JSON.stringify(actionData ?? 'new')} initial={values} csrf={d.csrf} now={d.now} errors={actionData?.errors} message={actionData?.message} />
+    <EventEditor key={JSON.stringify(actionData ?? 'new')} initial={values} toolbar={{role:d.role,headingId:"new-event-heading"}} csrf={d.csrf} now={d.now} errors={actionData?.errors} message={actionData?.message} />
   </section></ControlDashboard>;
 }

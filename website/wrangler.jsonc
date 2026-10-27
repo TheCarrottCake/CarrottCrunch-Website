@@ -18,6 +18,7 @@
 	// Local content development only. No production D1 binding or remote database.
 	"env": {
 		"content_dev": {
+			"triggers": { "crons": ["* * * * *"] },
 			"vars": { "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare", "CONTENT_DEMO_MODE": "false" },
 			"d1_databases": [{
 				"binding": "CONTENT_DB",

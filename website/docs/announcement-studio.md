@@ -1,5 +1,7 @@
 # Milestone 05A — Announcement Studio
 
+Milestone 05C extends this editor with explicit review and publication. See [Publication workflow](publication-workflow.md); the original milestone notes below describe its draft-only starting point.
+
 Community event drafting is now covered by [Milestone 05B](event-studio.md). The following records the original 05A scope; announcement URLs and workflows remain supported.
 
 News & Events now opens a staff-only announcement workspace at `/control/news`.

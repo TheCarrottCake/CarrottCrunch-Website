@@ -38,7 +38,7 @@ test('migration 0007 preserves existing content, public DTOs and immutable histo
   const tables = ['content_items', 'announcements', 'events', 'content_revisions', 'audit_records'];
   const before = {};
   for (const table of tables) before[table] = (await db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()).results;
-  const published = await getPublishedAnnouncements(db);
+  const published = (await db.prepare("SELECT * FROM content_items WHERE state='published'").all()).results;
   const migration = await readFile('migrations/0007_announcement_summaries.sql', 'utf8');
   await db.batch(splitSql(migration).map(sql => db.prepare(sql)));
   for (const table of tables) {
@@ -46,7 +46,7 @@ test('migration 0007 preserves existing content, public DTOs and immutable histo
     if (table === 'announcements') for (const row of after) { assert.equal(row.summary, ''); delete row.summary; }
     assert.deepEqual(after, before[table], table);
   }
-  assert.deepEqual(await getPublishedAnnouncements(db), published);
+  assert.deepEqual((await db.prepare("SELECT * FROM content_items WHERE state='published'").all()).results, published);
   for (const table of ['content_revisions', 'audit_records']) await assert.rejects(db.prepare(`DELETE FROM ${table}`).run());
 });
 

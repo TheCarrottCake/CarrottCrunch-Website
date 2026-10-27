@@ -1,3 +1,4 @@
+import { publishTestContent } from './fixtures/publication.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readdir, readFile } from 'node:fs/promises';
@@ -19,7 +20,7 @@ test('public content visibility and event ordering on real local D1', async t =>
   for (const name of (await readdir('migrations')).filter(name => name.endsWith('.sql')).sort()) {
     await db.batch(splitSql(await readFile(`migrations/${name}`, 'utf8')).map(sql => db.prepare(sql)));
   }
-  const publish = (id, time, state = 'published') => db.prepare('UPDATE content_items SET state=?,published_at=? WHERE id=?').bind(state, time, id).run();
+  const publish = (id, time, state = 'published') => state === 'published' ? publishTestContent(db,id,time) : db.prepare('UPDATE content_items SET state=?,published_at=? WHERE id=?').bind(state,time,id).run();
   const newest = await createAnnouncementDraft(db, { ...draft, slug: 'newest' });
   const older = await createAnnouncementDraft(db, { ...draft, slug: 'older' });
   await publish(older, now - 2); await publish(newest, now - 1);
@@ -29,7 +30,7 @@ test('public content visibility and event ordering on real local D1', async t =>
     await publish(id, state === 'future' ? now + 1 : now - 1, state === 'future' ? 'published' : state);
     hidden.push(id);
   }
-  await db.prepare('INSERT INTO content_revisions(id,content_id,revision,snapshot_json,actor_id,created_at) VALUES (?,?,2,?,?,?)')
+  await db.prepare('INSERT INTO content_revisions(id,content_id,revision,snapshot_json,actor_id,created_at) VALUES (?,?,3,?,?,?)')
     .bind(crypto.randomUUID(), newest, JSON.stringify({ body_text: 'PRIVATE UNPUBLISHED REVISION' }), 'private-actor', now).run();
   assert.deepEqual((await getPublishedAnnouncements(db, now)).map(row => row.id), [newest, older]);
   assert.equal((await getPublishedAnnouncement(db, newest, now)).body_text, 'Published text');
@@ -46,8 +47,8 @@ test('public content visibility and event ordering on real local D1', async t =>
   ]) {
     const id = await createEventDraft(db, { ...draft, slug, startsAt: start, endsAt: end, timezone: 'America/Toronto' });
     eventIds[slug] = id;
-    await publish(id, now - 1);
     await db.prepare('UPDATE events SET event_state=? WHERE content_id=?').bind(state, id).run();
+    await publish(id, now - 1);
   }
   const all = await getPublishedEvents(db, now);
   assert.deepEqual(all.map(row => row.slug), ['ongoing', 'upcoming', 'later', 'completed-new', 'completed-old', 'cancelled']);

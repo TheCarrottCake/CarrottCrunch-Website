@@ -1,5 +1,6 @@
+import { EditorToolbar, type EditorToolbarContext } from './editor-toolbar';
 import { useState } from 'react';
-import { Form, Link, useNavigation } from 'react-router';
+import { Form, useNavigation } from 'react-router';
 import type { EventValues, EventErrors } from '../lib/event-studio.server';
 import { eventTimeChoices, resolveEventTime, EVENT_TIMEZONE, eventTimeOptions, clockLabel, eventScheduleSummary } from '../lib/event-time';
 import { eventStatus } from '../lib/event-display';
@@ -59,8 +60,8 @@ function Schedule({ values, errors, change }: { values: EventValues; errors: Eve
   </fieldset>;
 }
 
-export function EventEditor({ initial, csrf, now, errors = {}, message, conflict = false, eventState = 'active' }: {
-  initial: EventValues; csrf: string; now: number; errors?: EventErrors; message?: string; conflict?: boolean; eventState?: 'active' | 'cancelled';
+export function EventEditor({ initial, csrf, now, errors = {}, message, conflict = false, eventState = 'active', toolbar, savedValues }: {
+  initial: EventValues; csrf: string; now: number; errors?: EventErrors; message?: string; conflict?: boolean; eventState?: 'active' | 'cancelled'; toolbar?: EditorToolbarContext; savedValues?: EventValues;
 }) {
   const [values, setValues] = useState(initial);
   const navigation = useNavigation();
@@ -75,12 +76,14 @@ export function EventEditor({ initial, csrf, now, errors = {}, message, conflict
     timing = { starts_at, ends_at };
   } catch (error) { timingError = (error as Error).message; }
   const summary = timing ? eventScheduleSummary(timing.starts_at, timing.ends_at) : '';
+  const dirty = !toolbar?.workflow || JSON.stringify(values) !== JSON.stringify(savedValues ?? initial);
   return <>
+    <EditorToolbar {...toolbar} key={toolbar?.workflow?.version} title={values.title || (toolbar?.workflow ? "Edit community event" : "New community event")} kind="event" csrf={csrf} formId="event-editor-form" dirty={dirty} conflict={conflict} busy={navigation.state !== "idle"} />
     {message && <div className="studio-message" role="alert" tabIndex={-1}><p>{message}</p>
       {conflict && <p>Open the latest draft in another tab to compare. Copy your changes before reloading; reloading replaces them with the saved version.</p>}
     </div>}
     <div className="studio-editor-grid">
-      <Form method="post" className="public-card studio-form" aria-label="Community event draft editor">
+      <Form id="event-editor-form" method="post" className="public-card studio-form" aria-label="Community event draft editor">
         <input type="hidden" name="_csrf" value={csrf} /><input type="hidden" name="revision" value={values.revision} /><input type="hidden" name="intent" value="save" />
         <h2>Write your event</h2>
         {errors.form && <p className="studio-field-error">{errors.form}</p>}
@@ -94,8 +97,7 @@ export function EventEditor({ initial, csrf, now, errors = {}, message, conflict
         <Schedule {...{ values, errors, change }} />
         <p className={summary ? 'event-schedule-summary' : 'studio-field-error'} aria-live="polite">{summary || timingError}</p>
         {errors.revision && <p className="studio-field-error">{errors.revision}</p>}
-        <div className="studio-actions"><button className="button primary" disabled={navigation.state !== 'idle' || conflict}>{navigation.state === 'submitting' ? 'Saving draft…' : 'Save draft'}</button><Link className="text-link" to="/control/news?kind=event">All event drafts</Link></div>
-        <p className="muted">Saved events remain private drafts. Publishing is not available.</p>
+        <p className="muted">Saving updates the private working copy. Publishing uses only a saved revision.</p>
       </Form>
       <section className="public-card studio-preview" aria-labelledby="event-preview-heading">
         <span className="micro orange">PRIVATE DRAFT PREVIEW</span><h2 id="event-preview-heading">Event preview</h2>

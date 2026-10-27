@@ -1,3 +1,4 @@
+import { publishTestContent } from './fixtures/publication.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile, readdir } from 'node:fs/promises';
@@ -55,11 +56,12 @@ test('D1 migrations, operations, publication filtering, and fixtures', async t =
           ? await createAnnouncementDraft(db, input)
           : await createEventDraft(db, { ...input, startsAt: now + 1000, endsAt: now + 2000, timezone: 'America/Toronto' });
         await db.prepare('UPDATE content_items SET state=?, published_at=? WHERE id=?').bind(state, now, id).run();
+        if (state === 'published') await publishTestContent(db,id,now);
       }
       const input = { ...draft, slug: `future-${kind}` };
       const id = kind === 'announcement' ? await createAnnouncementDraft(db, input)
         : await createEventDraft(db, { ...input, startsAt: now, endsAt: now + 1000, timezone: 'UTC' });
-      await db.prepare("UPDATE content_items SET state='published', published_at=? WHERE id=?").bind(now + 1, id).run();
+      await publishTestContent(db,id,now+1);
     }
     const announcements = await getPublishedAnnouncements(db, now);
     const events = await getPublishedEvents(db, now);

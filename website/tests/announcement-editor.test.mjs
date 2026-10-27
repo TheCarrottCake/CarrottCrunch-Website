@@ -1,3 +1,4 @@
+import { toolbarComponents } from './fixtures/toolbar-components.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
@@ -13,6 +14,7 @@ async function editor() {
   const imports = { react: React, 'react/jsx-runtime': jsx, './content-body': { ContentBody },
     'react-router': { Form: 'form', Link: ({ to, ...props }) => React.createElement('a', { ...props, href: to }), useNavigation: () => ({ state: 'idle' }) },
   };
+  imports['./editor-toolbar'] = (await toolbarComponents()).imports['./editor-toolbar'];
   const source = await readFile('app/components/announcement-editor.tsx', 'utf8');
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
   vm.runInNewContext(output, { module, exports: module.exports, require: key => {
@@ -31,7 +33,7 @@ test('announcement preview uses the public renderer, escapes fields and preserve
   assert.match(html, /&lt;script&gt;summary&lt;\/script&gt;/);
   assert.match(html, /name="revision" value="7"/);
   assert.match(html, /name="_csrf" value="test-only-csrf"/);
-  assert.match(html, /disabled=""[^>]*>Save draft/);
+  assert.match(html, /form="announcement-editor-form"[^>]*disabled=""/);
   assert.match(html, /role="alert"/);
   for (const id of ['announcement-title', 'announcement-summary', 'announcement-body']) assert.ok(html.includes(`for="${id}"`) && html.includes(`id="${id}"`));
   assert.match(html, /Copy your changes before reloading/);

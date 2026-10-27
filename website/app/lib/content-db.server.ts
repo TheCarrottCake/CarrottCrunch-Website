@@ -27,24 +27,24 @@ export type PublicQueryOptions = { demonstration?: boolean };
 const published = "c.state = 'published' AND c.is_fixture = ? AND c.published_at <= ?";
 
 export async function getPublishedAnnouncements(db: D1Database, now = Date.now(), limit = 20, options: PublicQueryOptions = {}): Promise<PublishedAnnouncement[]> {
-  const result = await db.prepare(`SELECT ${publicColumns} FROM content_items c
+  const result = await db.prepare(`SELECT ${publicColumns} FROM approved_public_content c
     JOIN announcements a ON a.content_id = c.id WHERE ${published}
     ORDER BY c.published_at DESC, c.id ASC LIMIT ?`).bind(options.demonstration ? 1 : 0, timestamp(now), pageSize(limit)).all<PublishedAnnouncement>();
   return result.results;
 }
 
 export async function getPublishedAnnouncement(db: D1Database, id: string, now = Date.now(), options: PublicQueryOptions = {}): Promise<PublishedAnnouncement | null> {
-  return db.prepare(`SELECT ${publicColumns} FROM content_items c JOIN announcements a ON a.content_id = c.id
+  return db.prepare(`SELECT ${publicColumns} FROM approved_public_content c JOIN announcements a ON a.content_id = c.id
     WHERE ${published} AND c.id = ?`).bind(options.demonstration ? 1 : 0, timestamp(now), id).first<PublishedAnnouncement>();
 }
 
 export async function getPublishedEvents(db: D1Database, now = Date.now(), limit = 20, options: PublicQueryOptions & { upcomingOnly?: boolean } = {}): Promise<PublishedEvent[]> {
   timestamp(now);
-  const result = await db.prepare(`SELECT ${publicColumns}, e.starts_at, e.ends_at, e.timezone, e.event_state
-    FROM content_items c JOIN events e ON e.content_id = c.id WHERE ${published}
-    ${options.upcomingOnly ? "AND e.event_state = 'active' AND e.starts_at > ?" : ''}
-    ORDER BY CASE WHEN e.event_state = 'cancelled' THEN 2 WHEN e.ends_at <= ? THEN 1 ELSE 0 END,
-      CASE WHEN e.event_state = 'active' AND e.ends_at <= ? THEN -e.ends_at ELSE e.starts_at END ASC,
+  const result = await db.prepare(`SELECT ${publicColumns}, c.starts_at, c.ends_at, c.timezone, c.event_state
+    FROM approved_public_content c WHERE c.kind='event' AND ${published}
+    ${options.upcomingOnly ? "AND c.event_state = 'active' AND c.starts_at > ?" : ''}
+    ORDER BY CASE WHEN c.event_state = 'cancelled' THEN 2 WHEN c.ends_at <= ? THEN 1 ELSE 0 END,
+      CASE WHEN c.event_state = 'active' AND c.ends_at <= ? THEN -c.ends_at ELSE c.starts_at END ASC,
       c.id ASC LIMIT ?`).bind(
         options.demonstration ? 1 : 0, now, ...(options.upcomingOnly ? [now] : []), now, now, pageSize(limit),
       ).all<PublishedEvent>();

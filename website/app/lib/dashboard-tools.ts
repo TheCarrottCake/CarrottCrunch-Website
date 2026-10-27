@@ -8,7 +8,7 @@ export type DashboardTool = {
   minimumRole: StaffRole;
 };
 const tools: readonly DashboardTool[] = [
-  { id: 'news', href: '/control/news', name: 'News & Events', description: 'Private announcement and event drafts and previews. Publishing is not available yet.', minimumRole: 'Moderator' },
+  { id: 'news', href: '/control/news', name: 'News & Events', description: 'Announcement and event drafts, review and publication.', minimumRole: 'Moderator' },
   { id: 'gallery', name: 'Gallery', description: 'Community gallery moderation.', minimumRole: 'Moderator' },
   { id: 'media', href: '/control/media', name: 'Media Library', description: 'Media for community content.', minimumRole: 'Moderator' },
   { id: 'profiles', name: 'Staff Profiles', description: 'Staff-profile review and approvals.', minimumRole: 'Administrator' },

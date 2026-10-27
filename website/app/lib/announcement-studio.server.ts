@@ -48,12 +48,12 @@ export function validateEditor(values: EditorValues): EditorErrors {
   return errors;
 }
 
-export async function listAnnouncementDrafts(db: D1Database, search: string, offset: number) {
+export async function listAnnouncementDrafts(db: D1Database, search: string, offset: number, status = '') {
   if (search.length > 160 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new StudioError('Use a search of at most 160 characters and a valid page.');
   // instr treats %, _ and other search characters literally; parameters never become SQL.
   const result = await db.prepare(`SELECT ${columns} FROM content_items c JOIN announcements a ON a.content_id=c.id
-    WHERE ${eligible} AND (?='' OR instr(lower(c.title || char(10) || a.summary),lower(?))>0)
-    ORDER BY c.updated_at DESC,c.id ASC LIMIT 25 OFFSET ?`).bind(search, search, offset).all<DraftAnnouncement>();
+    WHERE ${eligible.replace("c.state='draft'","c.state IN('draft','archived')")} AND (c.state!='archived' OR ?='archived') AND (?='' OR EXISTS(SELECT 1 FROM content_workflows w WHERE w.content_id=c.id AND w.status=?)) AND (?='' OR instr(lower(c.title || char(10) || a.summary),lower(?))>0)
+    ORDER BY c.updated_at DESC,c.id ASC LIMIT 25 OFFSET ?`).bind(status, status, status, search, search, offset).all<DraftAnnouncement>();
   return result.results;
 }
 export async function getAnnouncementDraft(db: D1Database, id: string): Promise<DraftAnnouncement> {
@@ -85,7 +85,7 @@ export async function saveAnnouncementDraft(db: D1Database, id: string | null, v
       AND (SELECT MAX(revision) FROM content_revisions WHERE content_id=?)=?`)
       .bind(values.title, values.bodyText, now, id, id, revision),
     db.prepare(`INSERT INTO audit_records(id,content_id,actor_id,action,details_json,created_at)
-      VALUES (?,?,?,'updated',CASE WHEN changes()=1 THEN ? ELSE NULL END,?)`).bind(crypto.randomUUID(), id, actorId, details, now),
+      VALUES (?,?,?,'updated',CASE WHEN changes()=1 THEN json_set(?, '$.invalidatedApproval',(SELECT approval_id FROM content_workflows WHERE content_id=?), '$.cancelledRelease',(SELECT pending_release_id FROM content_workflows WHERE content_id=?)) ELSE NULL END,?)`).bind(crypto.randomUUID(), id, actorId, details, id, id, now),
     db.prepare('UPDATE announcements SET summary=? WHERE content_id=?').bind(values.summary, id),
     db.prepare('INSERT INTO content_revisions(id,content_id,revision,snapshot_json,actor_id,created_at) VALUES (?,?,?,?,?,?)')
       .bind(crypto.randomUUID(), id, revision + 1, JSON.stringify(snapshot), actorId, now),

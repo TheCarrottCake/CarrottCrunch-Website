@@ -15,7 +15,7 @@ try {
   assert.equal(bundles.length, 1, 'Run npm run build first');
   const build = await import(pathToFileURL(resolve('build/server/assets', bundles[0])).href);
   // These documents contain native sign-in/logout or authenticated mutation forms.
-  for (const name of ['login', 'account', 'control', 'control-media', 'control-media-detail', 'control-news', 'control-news-new', 'control-news-detail', 'control-events-new', 'control-events-detail']) {
+  for (const name of ['login', 'account', 'control', 'control-media', 'control-media-detail', 'control-news', 'control-news-new', 'control-news-detail', 'control-events-new', 'control-events-detail', 'control-draft-delete','control-workflow','control-review']) {
     const headers = new Headers(build.routes[`routes/${name}`].module.headers());
     assert.equal(headers.get('Referrer-Policy'), 'same-origin', `${name} form document policy`);
   }
@@ -37,7 +37,7 @@ try {
   const sessionCookie = response.headers.getSetCookie().map(value => value.split(';')[0]).filter(value => !value.endsWith('=')).join('; ');
   const request = new Request(origin + '/control', { headers: { Cookie: sessionCookie } });
   const result = await control.loader({ request, context, params: {} });
-  assert.deepEqual(Object.keys(result.data).sort(), ['csrf', 'identity', 'role']);
+  assert.deepEqual(Object.keys(result.data).sort(), ['counts','csrf', 'identity', 'role']);
   assert.deepEqual(result.data.identity, { username: 'fictional_staff', displayName: 'Fictional Staff' });
   assert.equal(result.data.role, 'Owner');
   assert.doesNotMatch(JSON.stringify(result.data), /token_hash|discord_user_id|fictional-access-token|fictional-client-secret/);
@@ -124,6 +124,65 @@ try {
   assert.ok(homepage.events.every(event => event.id !== eventId));
   const protectedEvent = await editEvent.action({ request: studioPost({ ...eventFields, revision: '1' }), context, params: { eventId: existingEventId } });
   assert.equal(protectedEvent.init.status, 404);
+  // Exercise actual built 05C loaders/actions, including both content types in the queue.
+  const workflowRoute=build.routes['routes/control-workflow'].module;
+  const reviewQueue=build.routes['routes/control-review'].module;
+  for(const route of [workflowRoute,reviewQueue]) await assert.rejects(route.loader({request:new Request(origin+'/control/review'),context,params:{contentId:announcementId}}),e=>e.status===403);
+  const workflowCreated=await newAnnouncement.action({request:studioPost({...fields,title:'TEST ONLY workflow announcement'}),context,params:{}});
+  const workflowId=workflowCreated.headers.get('Location').split('/').at(-1).split('?')[0];
+  const workflowArgs=id=>({request:studioRequest('/control/workflow/'+id),context,params:{contentId:id}});
+  const workflowPost=async(id,intent,extra={})=>{const w=(await workflowRoute.loader(workflowArgs(id))).data.workflow;return workflowRoute.action({...workflowArgs(id),request:new Request(origin+'/control/workflow/'+id,{method:'POST',headers:{Origin:origin,Cookie:sessionCookie,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({_csrf:result.data.csrf,intent,revision:String(w.editorial_revision),version:String(w.version),...extra})})});};
+  assert.equal((await workflowPost(workflowId,'submit')).status,303);
+  const reviewEventId=await createEventDraft(db,{slug:'test-review-queue-event',title:'TEST ONLY queue event',bodyText:'TEST ONLY queue body',actorId:env.INITIAL_OWNER_DISCORD_ID,startsAt:2000000000000,endsAt:2000003600000,timezone:'America/Toronto'});
+  assert.equal((await workflowPost(reviewEventId,'submit')).status,303);
+  const queue=(await reviewQueue.loader({request:studioRequest('/control/review'),context,params:{}})).data;
+  assert.deepEqual(new Set(queue.items.map(i=>i.kind)),new Set(['event','announcement']));
+  assert.equal((await workflowPost(workflowId,'approve')).status,303);
+  await assert.rejects(publicArticle.loader({request:new Request(origin+'/updates/'+workflowId),context,params:{announcementId:workflowId}}),e=>e.status===404);
+  assert.equal((await workflowPost(workflowId,'publish',{_csrf:'bad'})).status,403);
+  assert.equal((await workflowPost(workflowId,'publish')).status,303);
+  assert.equal((await publicArticle.loader({request:new Request(origin+'/updates/'+workflowId),context,params:{announcementId:workflowId}})).data.article.title,'TEST ONLY workflow announcement');
+  assert.equal((await editAnnouncement.action({request:studioPost({...fields,title:'TEST ONLY private edit',revision:'1'}),context,params:{announcementId:workflowId}})).status,303);
+  assert.equal((await publicArticle.loader({request:new Request(origin+'/updates/'+workflowId),context,params:{announcementId:workflowId}})).data.article.title,'TEST ONLY workflow announcement');
+  assert.equal((await workflowPost(workflowId,'publish')).status,409);
+  assert.equal((await workflowPost(workflowId,'unpublish')).status,303);
+  await assert.rejects(publicArticle.loader({request:new Request(origin+'/updates/'+workflowId),context,params:{announcementId:workflowId}}),e=>e.status===404);
+  assert.equal((await workflowPost(workflowId,'archive')).status,303);
+  assert.equal((await workflowPost(reviewEventId,'reject',{explanation:'TEST ONLY return for revision'})).status,303);
+  assert.equal((await workflowPost(reviewEventId,'archive')).status,303);
+  const combinedCreated=await newAnnouncement.action({request:studioPost({...fields,title:'TEST ONLY combined route'}),context,params:{}});
+  const combinedId=combinedCreated.headers.get('Location').split('/').at(-1).split('?')[0];
+  const combined=await workflowPost(combinedId,'approve-publish',{returnTo:'editor'});assert.equal(combined.status,303);assert.equal(combined.headers.get('Location'),`/control/news/${combinedId}?updated=1`);
+  assert.deepEqual((await db.prepare('SELECT action,revision FROM content_reviews WHERE content_id=? ORDER BY rowid').bind(combinedId).all()).results,[{action:'submitted',revision:1},{action:'approved',revision:1}]);
+  assert.equal((await editAnnouncement.action({request:studioPost({...fields,title:'TEST ONLY private combined replacement',revision:'1'}),context,params:{announcementId:combinedId}})).status,303);
+  assert.equal((await workflowPost(combinedId,'approve-schedule',{returnTo:'editor',date:'2099-01-01',time:'12:00',occurrence:''})).status,303);
+  assert.equal((await workflowRoute.loader(workflowArgs(combinedId))).data.workflow.status,'scheduled');
+  assert.equal((await publicArticle.loader({request:new Request(origin+'/updates/'+combinedId),context,params:{announcementId:combinedId}})).data.article.title,'TEST ONLY combined route');
+  assert.equal((await workflowPost(combinedId,'cancel-schedule')).status,303);assert.equal((await workflowPost(combinedId,'archive')).status,303);
+  const deleteRoute = build.routes['routes/control-draft-delete'].module;
+  const deleteRequest = (kind, revision, csrf = result.data.csrf, cookie = sessionCookie) => new Request(origin + '/control/drafts/test/delete', {
+    method: 'POST', headers: { Origin: origin, Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ kind, revision: String(revision), intent: 'delete', _csrf: csrf }),
+  });
+  for (const [kind, draftId, route, params] of [['announcement', announcementId, editAnnouncement, { announcementId }], ['event', eventId, editEvent, { eventId }]]) {
+    const args = request => ({ request, context, params: { draftId } });
+    assert.equal((await deleteRoute.action(args(deleteRequest(kind, 2, 'bad')))).status, 403);
+    assert.equal((await deleteRoute.action(args(deleteRequest(kind, 2, result.data.csrf, '')))).status, 403);
+    assert.equal((await deleteRoute.action(args(deleteRequest(kind, 1)))).status, 409);
+    const removed = await deleteRoute.action(args(deleteRequest(kind, 2)));
+    assert.equal(removed.status, 303);
+    const destination = removed.headers.get('Location');
+    const list = (await studio.loader({ request: studioRequest(destination), context, params: {} })).data;
+    assert.equal(list.deleted, true); assert.ok(list.items.every(item => item.id !== draftId));
+    assert.equal(list.kind, kind);
+    await assert.rejects(route.loader({ request: studioRequest(`/control/${kind === 'event' ? 'events' : 'news'}/${draftId}`), context, params }), error => error.status === 404);
+    assert.equal((await deleteRoute.action(args(deleteRequest(kind, 2)))).status, 409);
+    const archived = await db.prepare('SELECT state,published_at FROM content_items WHERE id=?').bind(draftId).first();
+    assert.equal(archived.state, 'archived'); assert.equal(archived.published_at, null);
+    assert.equal((await db.prepare('SELECT count(*) AS n FROM content_revisions WHERE content_id=?').bind(draftId).first()).n, 3);
+    await assert.rejects(publicArticle.loader({ request: new Request(origin + `/updates/${draftId}`), context, params: { announcementId: draftId } }), error => error.status === 404);
+  }
+  assert.equal((await deleteRoute.action({ request: deleteRequest('event', 1), context, params: { draftId: existingEventId } })).status, 409);
+  assert.deepEqual((await build.routes['routes/updates'].module.loader({ request: new Request(origin + '/updates'), context, params: {} })).data.events, publicBefore.events);
   const loggedOut = await logout.action({ request: new Request(origin + '/control/logout', { method: 'POST', headers: { Origin: origin, Cookie: sessionCookie, 'Content-Type': 'application/x-www-form-urlencoded' }, body: `_csrf=${result.data.csrf}` }), context, params: {} });
   assert.equal(loggedOut.status, 303);
   await assert.rejects(control.loader({ request, context, params: {} }), result => result.status === 302);
@@ -141,6 +200,7 @@ try {
   const account = build.routes['routes/account'].module;
   const publicLayout = build.routes['routes/public-layout'].module;
   const memberData = await account.loader({ request: memberRequest, context, params: {} });
+  assert.equal((await deleteRoute.action({ request: deleteRequest('event', 1, memberData.data.csrf, memberJar), context, params: { draftId: legacyId } })).status, 403);
   assert.equal(memberData.data.account.canAccessControl, false);
   assert.equal(memberData.data.account.username, 'fictional_member');
   assert.match(memberData.data.account.avatarUrl, /^https:\/\/cdn.discordapp.com\/avatars\//);

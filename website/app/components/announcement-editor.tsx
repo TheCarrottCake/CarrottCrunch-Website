@@ -1,20 +1,23 @@
+import { EditorToolbar, type EditorToolbarContext } from './editor-toolbar';
 import { useState } from 'react';
-import { Form, Link, useNavigation } from 'react-router';
+import { Form, useNavigation } from 'react-router';
 import { ContentBody } from './content-body';
 import type { EditorValues, EditorErrors } from '../lib/announcement-studio.server';
 
-export function AnnouncementEditor({ initial, csrf, errors = {}, message, conflict = false }: {
-  initial: EditorValues; csrf: string; errors?: EditorErrors; message?: string; conflict?: boolean;
+export function AnnouncementEditor({ initial, csrf, errors = {}, message, conflict = false, toolbar, savedValues }: {
+  initial: EditorValues; csrf: string; errors?: EditorErrors; message?: string; conflict?: boolean; toolbar?: EditorToolbarContext; savedValues?: EditorValues;
 }) {
   const [values, setValues] = useState(initial);
   const navigation = useNavigation();
   const change = (name: 'title' | 'summary' | 'bodyText', value: string) => setValues(current => ({ ...current, [name]: value }));
+  const dirty = !toolbar?.workflow || JSON.stringify(values) !== JSON.stringify(savedValues ?? initial);
   return <>
+    <EditorToolbar {...toolbar} key={toolbar?.workflow?.version} title={values.title || (toolbar?.workflow ? "Edit announcement" : "New announcement")} kind="announcement" csrf={csrf} formId="announcement-editor-form" dirty={dirty} conflict={conflict} busy={navigation.state !== "idle"} />
     {message && <div className="studio-message" role="alert" tabIndex={-1}><p>{message}</p>
       {conflict && <p>Open the latest draft in another tab to compare. Copy your changes before reloading this editor; reloading replaces them with the saved version.</p>}
     </div>}
     <div className="studio-editor-grid">
-      <Form method="post" className="public-card studio-form" aria-label="Announcement draft editor">
+      <Form id="announcement-editor-form" method="post" className="public-card studio-form" aria-label="Announcement draft editor">
         <input type="hidden" name="_csrf" value={csrf} />
         <input type="hidden" name="revision" value={values.revision} />
         <input type="hidden" name="intent" value="save" />
@@ -35,8 +38,7 @@ export function AnnouncementEditor({ initial, csrf, errors = {}, message, confli
         <p className="muted" id="body-help">Supports ## headings, ### subheadings, **bold**, *emphasis*, `code`, - lists and safe links. HTML and embeds stay plain text. Up to 40,000 characters.</p>
         <p className="studio-field-error" id="body-error">{errors.bodyText}</p>
         {errors.revision && <p className="studio-field-error">{errors.revision}</p>}
-        <div className="studio-actions"><button className="button primary" disabled={navigation.state !== 'idle' || conflict}>{navigation.state === 'submitting' ? 'Saving draft…' : 'Save draft'}</button><Link className="text-link" to="/control/news">All drafts</Link></div>
-        <p className="muted">Saved drafts remain private. Publishing is not available in this milestone.</p>
+        <p className="muted">Saving updates the private working copy. Publishing uses only a saved revision.</p>
       </Form>
       <section className="public-card studio-preview" aria-labelledby="preview-heading">
         <span className="micro orange">PRIVATE PREVIEW</span><h2 id="preview-heading">Announcement preview</h2>

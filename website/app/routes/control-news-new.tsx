@@ -21,7 +21,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function NewAnnouncement({ loaderData: d, actionData }: Route.ComponentProps) {
   const values = actionData?.values ?? { title: '', summary: '', bodyText: '', revision: '0' };
   return <ControlDashboard {...d} section="News & Events"><section className="studio-workspace" aria-labelledby="new-heading">
-    <h1 id="new-heading">New announcement</h1><p>Start with a private draft. Nothing saved here appears on the public website.</p>
-    <AnnouncementEditor key={JSON.stringify(actionData ?? 'new')} initial={values} csrf={d.csrf} errors={actionData?.errors} message={actionData?.message} />
+    <AnnouncementEditor key={JSON.stringify(actionData ?? 'new')} initial={values} toolbar={{role:d.role,headingId:"new-heading"}} csrf={d.csrf} errors={actionData?.errors} message={actionData?.message} />
   </section></ControlDashboard>;
 }

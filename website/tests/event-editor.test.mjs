@@ -1,3 +1,4 @@
+import { toolbarComponents } from './fixtures/toolbar-components.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
@@ -13,6 +14,7 @@ import * as eventDisplay from '../app/lib/event-display.ts';
 async function components(react = React) {
   const imports = { react, 'react/jsx-runtime': jsx, '../lib/event-time': eventTime, '../lib/event-display': eventDisplay,
     './content-body': { ContentBody }, 'react-router': { Form: 'form', Link: ({ to, ...props }) => React.createElement('a', { ...props, href: to }), useNavigation: () => ({ state: 'idle' }) } };
+  imports['./editor-toolbar'] = (await toolbarComponents(react)).imports['./editor-toolbar'];
   async function load(file) {
     const module = { exports: {} };
     const source = await readFile(file, 'utf8');
@@ -45,7 +47,7 @@ test('event scheduling uses a date and quarter-hour AM/PM dropdowns, with friend
   assert.match(html, /name="endOccurrence"[^>]*checked=""[^>]*value="later"/);
   assert.match(html, /value="2026-11-01T01:15:00.123"/);
   assert.match(html, /name="revision" value="7"/);
-  assert.match(html, /role="alert"/); assert.match(html, /disabled=""[^>]*>Save draft/);
+  assert.match(html, /role="alert"/); assert.match(html, /form="event-editor-form"[^>]*disabled=""/);
   assert.match(html, /Copy your changes before reloading/);
 });
 
@@ -60,7 +62,7 @@ test('changing a time clears its occurrence while preserving the other saved end
   let state;
   const { EventEditor } = await components({ ...React, useState: value => [state ??= value, next => { state = next(state); }] });
   const props = { initial, csrf: 'test', now };
-  const field = tree => tree.props.children[1].props.children[0].props.children.find(child => child?.props?.change);
+  const field = tree => tree.props.children.find(child => child?.props?.className === 'studio-editor-grid').props.children[0].props.children.find(child => child?.props?.change);
   field(EventEditor(props)).props.change('startLocal', '2026-11-01T01:20');
   assert.equal(state.startOccurrence, ''); assert.equal(state.endOccurrence, 'later');
   field(EventEditor(props)).props.change('endLocal', '2026-11-01T02:00');

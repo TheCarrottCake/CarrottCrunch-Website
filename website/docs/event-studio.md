@@ -1,5 +1,7 @@
 # Milestone 05B — Community Events Editor
 
+Milestone 05C adds revision-bound approval and publication while retaining this editor's timing behavior. See [Publication workflow](publication-workflow.md); the draft-only restrictions below describe the original 05B milestone.
+
 The News & Events workspace now has Announcements and Events tabs. Events are private drafts only. Moderator, Administrator and Owner accounts can search event titles/descriptions, create drafts at `/control/events/new`, and reopen/edit them at `/control/events/:eventId`. Existing announcement URLs and behavior are retained.
 
 ## Checkpoint and storage
