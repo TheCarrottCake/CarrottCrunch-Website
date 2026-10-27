@@ -1,7 +1,7 @@
 /* Brand expression layered over the established homepage layout. */
 :root {
   --coral: var(--accent);
-  --green: var(--accent);
+  --green: var(--foliage);
   --muted: var(--text-muted);
   --font-display: "Trebuchet MS", "Avenir Next", var(--font-sans);
 }
@@ -47,7 +47,7 @@ h1 span::after {
   box-shadow: 0 5px 0 color-mix(in srgb, var(--shadow) 33.33%, transparent);
 }
 .button:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
-.secondary:hover { background: color-mix(in srgb, var(--accent) 7.84%, transparent); border-color: var(--green); }
+.secondary:hover { background: color-mix(in srgb, var(--accent) 7.84%, transparent); border-color: var(--accent); }
 .button:disabled { box-shadow: none; opacity: .75; white-space: normal; text-align: center; }
 .section-heading .section-number {
   display: inline-block;

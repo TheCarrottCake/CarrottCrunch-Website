@@ -107,7 +107,7 @@ export function EditorToolbar({ title, kind, csrf, workflow: w, role = 'Moderato
 
   return <header className="editor-toolbar" aria-label={`${kind === 'event' ? 'Event' : 'Announcement'} editor actions`}>
     <div className="editor-toolbar-heading"><h1 id={headingId} title={title}>{title}</h1>
-      <p className="editor-toolbar-state" aria-live="polite">{w ? `${labels[w.status]} · Revision ${w.editorial_revision}` : 'New private draft'}
+      <p className="editor-toolbar-state" data-workflow-status={w?.status} aria-live="polite">{w ? `${labels[w.status]} · Revision ${w.editorial_revision}` : 'New private draft'}
         {w?.live_release_id ? ' · Live version unchanged by edits' : ''} · {dirty ? 'Unsaved changes' : 'Saved'}{pending || busy ? ' · Working…' : ''}</p>
     </div>
     <div className="editor-toolbar-actions">

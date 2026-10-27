@@ -23,7 +23,7 @@ export function publicMeta(page: PublicPageContent) {
 
 /** Presentation accepts plain content so a future content source can supply it. */
 export function PublicPage({ content, children }: { content: PublicPageContent; children?: ReactNode }) {
-  return <div className="container public-page">
+  return <div className={`container public-page public-page--${content.title.toLowerCase()}`}>
     <header className="public-page-intro">
       <div className="eyebrow orange">{content.eyebrow}</div>
       <h1>{content.title}<span>.</span></h1>

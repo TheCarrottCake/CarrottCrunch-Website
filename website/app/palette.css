@@ -8,6 +8,10 @@
   --featured: #44271F;
   --on-featured: #FFF5E9;
   --text-muted: #70513F;
+  --foliage: #6C8056;
+  --foliage-text: #50633E;
+  --foliage-on-dark: #B4C69D;
+  --success: var(--foliage-text);
   --on-action: #FFF5E9;
   --action-hover: #91351C;
   --border: #CDAA90;
@@ -18,7 +22,7 @@
   --orange: var(--accent);
   --cream: var(--text);
   --coral: var(--accent);
-  --green: var(--accent);
+  --green: var(--foliage);
   --muted: var(--text-muted);
   --line: var(--border);
 }
@@ -124,3 +128,27 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
 input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 /* Keep validation visible after the shared native-field border rule. */
 #control-main [aria-invalid=true] { border-color: var(--field-error); }
+
+/* Small nature details; actions and focus indicators retain burnt orange. */
+.hero .tiny-star { color: var(--foliage); }
+#community .section-number, #gallery .section-number,
+#hangout .section-number { color: var(--foliage-text); }
+#gallery .section-number { border-color: var(--border); background: var(--surface); }
+.feature--green { --card-accent: var(--foliage); background: var(--surface); border-color: var(--border); }
+.feature--green + .feature { border-left-color: var(--border); }
+.feature--green .micro { color: var(--foliage-text); }
+.feature--green .feature-icon { color: var(--foliage-text); }
+.showcase:not(.builders):not(.night) { --scene-accent: var(--foliage-on-dark); }
+.gallery-wide .gallery-copy .micro { color: var(--foliage-on-dark); }
+.site-footer .brand-dot { color: var(--foliage-text); }
+.public-page--community .public-card:first-child h2::before,
+.public-page--gallery .public-card:first-child h2::before {
+  content: ""; display: inline-block; width: .4em; height: .7em;
+  margin-right: .5em; border-radius: 80% 0 80% 0;
+  background: var(--foliage); transform: rotate(20deg);
+}
+#control-main [data-workflow-status="approved"],
+#control-main [data-workflow-status="published"] { color: var(--success); }
+#control-main [data-workflow-status="approved"]::before,
+#control-main [data-workflow-status="published"]::before { content: "\2713 "; }
+#control-main .studio-message[role="status"] { border-left-color: var(--foliage); }
