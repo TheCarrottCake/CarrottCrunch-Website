@@ -38,7 +38,9 @@ export function Header({ account = null }: { account?: AccountView | null } = {}
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, []);
-  return <header className={`site-header${scrolled ? " is-scrolled" : ""}`} onKeyDown={event => {
+  return <header className={`site-header v3-site-header${scrolled ? " is-scrolled" : ""}`} onBlurCapture={event => {
+    if (open && event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+  }} onKeyDown={event => {
     if (event.key === "Escape" && open) { setOpen(false); toggle.current?.focus(); }
   }}><div className="header-inner"><Brand/><button ref={toggle} className="menu-toggle" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? "Close ✕" : "Menu ☰"}</button><nav id="main-nav" aria-label="Main navigation" className={open ? "nav open" : "nav"}>{navigation.map(([name, id]) => <NavLink key={id} to={id} onClick={() => setOpen(false)}>{name}</NavLink>)}{account ? <AccountMenu account={account} onNavigate={() => setOpen(false)} /> : <Link className="nav-staff button secondary" to="/login" onClick={() => setOpen(false)}>Sign In</Link>}<Link className="nav-join button primary" to="/join" onClick={() => setOpen(false)}>Join Discord <span aria-hidden="true">↗</span></Link></nav></div></header>;
 }

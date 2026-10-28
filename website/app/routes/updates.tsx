@@ -1,3 +1,4 @@
+import {EditorialHeader} from '../components/public-page';
 import { data } from 'react-router';
 import type { Route } from './+types/updates';
 import { loadPublicContent } from '../lib/public-content.server';
@@ -24,13 +25,14 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 export default function Updates({ loaderData }: Route.ComponentProps) {
   const { announcements, events, now, demonstration, availability } = loaderData;
-  return <div className="container public-page">
-    <header className="public-page-intro"><div className="eyebrow orange">FRESH FROM THE PATCH</div><h1>News & Events<span>.</span></h1><p>Published news and shared plans, all in one place.</p></header>
+  return <div className="v3-container v3-page v3-updates">
+    <EditorialHeader eyebrow="FRESH FROM THE PATCH" title="News & " accent="Events." description="Published news and shared plans, all in one place."/>
+
     <DemonstrationNotice enabled={demonstration} />
     <ContentAvailability availability={availability} />
     <section aria-labelledby="announcements-title" className="content-section">
       <h2 id="announcements-title">Latest news</h2>
-      <div className="public-card-grid">{announcements.map(article => <NewsItem key={article.id} article={article} />)}</div>
+      <div className="v3-news-grid">{announcements.map(article => <NewsItem key={article.id} article={article} />)}</div>
       {availability === 'ready' && announcements.length === 0 && <p className="content-empty">No published news yet. Check back later.</p>}
     </section>
     <section id="events" aria-labelledby="events-title" className="content-section">
@@ -38,7 +40,7 @@ export default function Updates({ loaderData }: Route.ComponentProps) {
       {(['Upcoming', 'In progress', 'Completed', 'Cancelled'] as const).map(status => {
         const items = events.filter(event => eventStatus(event, now) === status);
         return items.length > 0 ? <section key={status} aria-label={`${status} events`} className="event-group">
-          <h3>{status}</h3><div className="public-card-grid">{items.map(event => <EventCard key={event.id} event={event} now={now} />)}</div>
+          <h3>{status}</h3><div className="v3-news-grid">{items.map(event => <EventCard key={event.id} event={event} now={now} />)}</div>
         </section> : null;
       })}
       {availability === 'ready' && events.length === 0 && <p className="content-empty">No published events yet. Check back later.</p>}

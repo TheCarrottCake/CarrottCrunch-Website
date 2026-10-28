@@ -1,3 +1,4 @@
+import {EditorialHeader} from '../components/public-page';
 import {StudioBody} from '../components/studio-render';
 import {FeaturedImageView} from '../components/featured-image';
 import { data, isRouteErrorResponse, Link } from 'react-router';
@@ -38,19 +39,19 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 export default function NewsArticle({ loaderData }: Route.ComponentProps) {
   const { article, demonstration } = loaderData;
-  return <article className="container public-page news-article">
+  return <article className="v3-container v3-page v3-article">
     <Link className="text-link" to="/updates">← All news & events</Link>
     <DemonstrationNotice enabled={demonstration} />
-    <header className="public-page-intro"><div className="eyebrow orange">{article.is_fixture ? 'FICTIONAL DEVELOPMENT NEWS' : 'COMMUNITY NEWS'}</div><h1>{article.title}</h1>
+    <EditorialHeader title={article.title} eyebrow={article.is_fixture ? 'FICTIONAL DEVELOPMENT NEWS' : 'COMMUNITY NEWS'}>
       <p><time dateTime={new Date(article.published_at).toISOString()}>Published {new Intl.DateTimeFormat('en-CA', { dateStyle: 'long', timeZone: 'UTC' }).format(article.published_at)} (UTC)</time></p>
-    </header>
+    </EditorialHeader>
     <FeaturedImageView key={article.featuredImage?.id} image={article.featuredImage}/>
-    {article.studioImages?<StudioBody text={article.body_text} images={article.studioImages}/>:<ContentBody text={article.body_text} />}
+    <div className="v3-article-body">{article.studioImages?<StudioBody text={article.body_text} images={article.studioImages}/>:<ContentBody text={article.body_text} />}</div>
   </article>;
 }
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   const missing = isRouteErrorResponse(error) && error.status === 404;
-  return <div className="container public-page"><h1>{missing ? 'Article not found' : 'News unavailable'}</h1>
+  return <div className="v3-container v3-page"><EditorialHeader title={missing ? 'Article not found' : 'News unavailable'}/>
     <p className="content-empty">{missing ? 'This article is not available. It may not be published.' : 'News is currently unavailable. Please try again later.'}</p>
     <Link className="button secondary" to="/updates">Back to news & events</Link>
   </div>;

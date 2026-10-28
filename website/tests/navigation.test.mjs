@@ -59,6 +59,12 @@ test('public desktop/mobile header links preserve Discord joining and close the 
   one(tree, node => node.type === 'header').props.onKeyDown({ key: 'Escape' }); tree = render();
   assert.equal(toggle().props['aria-expanded'], false);
   assert.equal(focused, true);
+  toggle().props.onClick(); tree = render();
+  const header = () => one(tree, node => node.type === 'header');
+  header().props.onBlurCapture({relatedTarget:{},currentTarget:{contains:()=>true}});tree=render();
+  assert.equal(toggle().props['aria-expanded'],true,'Focus within navigation must keep it open');
+  header().props.onBlurCapture({relatedTarget:{},currentTarget:{contains:()=>false}});tree=render();
+  assert.equal(toggle().props['aria-expanded'],false,'Tabbing into page content must dismiss the overlay');
 });
 
 test('dashboard role navigation, mobile toggle/Escape, and CSRF logout remain intact', async () => {
