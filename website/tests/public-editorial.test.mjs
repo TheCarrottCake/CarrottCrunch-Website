@@ -26,15 +26,36 @@ test('Editorial headers support optional context without images or unsafe title 
 
 test('Informational pages retain all published copy and clearly distinguish unfinished content',async()=>{
   const {PublicPage}=await component('app/components/public-page.tsx');const {publicPages}=await component('app/content/public-pages.ts');
-  for(const key of ['community','servers','about','safety']){
+  for(const key of ['community','servers','safety']){
     const page=publicPages[key],html=render(PublicPage,{content:page});
     assert.equal((html.match(/<h1\b/g)||[]).length,1);
     for(const section of page.sections){assert.ok(html.includes(section.title));assert.ok(html.includes(section.text));}
     assert.equal((html.match(/CONTENT NOT YET PUBLISHED/g)||[]).length,page.sections.filter(s=>s.placeholder).length);
     assert.match(html,/href="\/join"/);assert.match(html,/href="\/"/);
-    if(key==='about')assert.match(html,/NEEDS EDITORIAL REVIEW/);
     if(key==='servers')assert.match(html,/v3-cocoa/);
   }
+});
+
+test('About preserves the approved history and founder message with honest memory placeholders',async()=>{
+  const About=(await component('app/routes/about.tsx')).default;
+  const {publicPages}=await component('app/content/public-pages.ts');
+  const html=render(About,{}),page=publicPages.about;
+  const escaped=text=>renderToStaticMarkup(h('span',null,text)).slice(6,-7);
+  assert.equal((html.match(/<h1\b/g)||[]).length,1);assert.equal((html.match(/<h2\b/g)||[]).length,3);
+  assert.match(html,/<h1>About <span class="v3-page-accent">CarrottCrunch\.<\/span><\/h1>/);
+  assert.ok(html.includes(escaped(page.description)));
+  for(const section of page.sections){assert.ok(html.includes(section.title));for(const paragraph of section.text.split('\n\n'))assert.ok(html.includes(escaped(paragraph)),paragraph);}
+  assert.match(html,/class="v3-about-founder v3-cocoa"/);
+  assert.ok(html.includes(escaped("Hey! I'm Carrott!")));assert.match(html,/TheCarrottCake · Founder of CarrottCrunch/);
+  assert.match(html,/<strong>Come for the games\. Stay for the people\.<\/strong>/);assert.match(html,/<strong>See you around!<\/strong>/);
+  assert.match(html,/href="\/join"/);assert.match(html,/href="\/servers"/);
+  assert.doesNotMatch(html,/NEEDS EDITORIAL REVIEW|Brand artwork|not been published/i);
+  assert.equal((html.match(/Awaiting a real historical image\./g)||[]).length,2);
+  assert.match(html,/not a complete timeline/);
+  for(const name of ["The Boop&#x27;s Discord",'CarrottCrazeHQ','The Rooted Realm','CarrottCrunch'])assert.ok(html.includes(name));
+  assert.match(html,/src="\/branding\/TCC_Logo_Icon_Only\.svg"/);
+  assert.doesNotMatch(html,/TCC_Logo_Master|<blockquote|\/images\//);
+  for(const index of [0,1,2])assert.match(html,new RegExp(`id="about-section-${index}"`));
 });
 
 test('Public gallery preserves featured ordering, enabled filtering, derivative URLs and credits',async()=>{

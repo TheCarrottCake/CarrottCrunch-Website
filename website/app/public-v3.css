@@ -566,3 +566,97 @@
 @media (max-width: 47.5rem) {
   .public-v3 .v3-site-header { --v3-nav-block: 77px; }
 }
+
+/* About: a community scrapbook, with the approved story kept in reading order. */
+.public-v3 .v3-about { --v3-about-space: clamp(3.5rem, 7vw, 6rem); }
+.public-v3 .v3-about-opening { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: center; gap: clamp(2rem, 5vw, 5rem); padding-block-end: var(--v3-about-space); }
+.public-v3 .v3-about-opening h1 { font-size: clamp(2.75rem, 5.2vw, 4.75rem); line-height: 1.04; letter-spacing: -.055em; margin: 0 0 1.5rem; }
+.public-v3 .v3-about-opening h1 span { display: block; }
+.public-v3 .v3-about-opening h1 span::after { content: none; }
+.public-v3 .v3-about-lead { font-size: clamp(1.125rem, 1.7vw, 1.375rem); max-inline-size: 34ch; }
+.public-v3 .v3-about-lead strong { color: var(--foliage-text); font-weight: 750; }
+.public-v3 .v3-about-introduction { color: var(--text-muted); margin-block-start: 1.25rem; max-inline-size: 57ch; }
+.public-v3 .v3-about-scrapbook { position: relative; padding: 2rem 1.25rem 0; }
+.public-v3 .v3-about-spark { position: absolute; top: -.75rem; inset-inline-end: .5rem; color: var(--foliage); font-size: 3rem; line-height: 1; }
+.public-v3 .v3-memory-slot { margin: 0; padding: .75rem; background: var(--surface); border: 1px solid var(--border-strong); border-radius: .375rem; box-shadow: .5rem .5rem 0 color-mix(in srgb, var(--featured) 9%, transparent); }
+.public-v3 .v3-memory-slot--opening { transform: rotate(3deg); }
+.public-v3 .v3-memory-canvas { position: relative; display: grid; place-items: center; aspect-ratio: 3 / 2; border: 1px dashed var(--border-strong); background: var(--page-bg); color: var(--foliage-text); }
+.public-v3 .v3-memory-canvas > span:first-child { font-size: 3rem; font-weight: 400; }
+.public-v3 .v3-memory-corner { position: absolute; inset: auto .65rem .35rem auto; color: var(--accent); font-size: 1.25rem; }
+.public-v3 .v3-memory-slot figcaption { display: grid; gap: .2rem; padding: .9rem .25rem .35rem; font-size: .8125rem; line-height: 1.6; color: var(--text-muted); }
+.public-v3 .v3-memory-slot figcaption strong { color: var(--text); font-weight: 750; }
+.public-v3 .v3-memory-caption { margin-block-start: 1.5rem; text-align: center; color: var(--foliage-text); font-size: .875rem; font-weight: 650; }
+.public-v3 .v3-about-section-title { display: flex; align-items: baseline; gap: 1rem; margin-block-end: 1.25rem; }
+.public-v3 .v3-about-section-title .v3-section-index { flex: none; }
+.public-v3 .v3-about-section-title h2 { font-size: clamp(1.875rem, 3.4vw, 2.75rem); max-inline-size: 24ch; }
+.public-v3 .v3-about-history { padding-block: 2.5rem var(--v3-about-space); border-block-start: 1px solid var(--border); }
+.public-v3 .v3-about-chapter-note { color: var(--text-muted); font-size: .875rem; margin-block-end: 1.5rem; }
+.public-v3 .v3-about-chapters { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .875rem; list-style: none; margin: 0 0 3rem; padding: 0; }
+.public-v3 .v3-about-chapters li { display: flex; align-items: center; gap: .75rem; min-inline-size: 0; padding: 1.5rem 1.1rem; border: 1px solid var(--border); border-block-start: 4px solid var(--foliage); border-radius: .75rem .75rem .25rem .25rem; background: var(--surface); font-size: clamp(1rem, 1.65vw, 1.375rem); font-weight: 750; letter-spacing: -.025em; }
+.public-v3 .v3-about-chapters li:nth-child(2) { border-block-start-color: var(--supporting); }
+.public-v3 .v3-about-chapters li:nth-child(3) { border-block-start-color: var(--text-muted); }
+.public-v3 .v3-about-chapters .v3-about-current-chapter { border-color: var(--accent); background: var(--accent); color: var(--on-action); }
+.public-v3 .v3-about-current-chapter .crunch-mark { inline-size: 2.25rem; block-size: 2.5rem; flex: none; object-fit: contain; padding: .25rem; border-radius: .35rem; background: var(--surface); }
+.public-v3 .v3-about-history-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: clamp(2rem, 5vw, 5rem); }
+.public-v3 .v3-about-copy { max-inline-size: 65ch; color: var(--text-muted); }
+.public-v3 .v3-about-copy > p + p { margin-block-start: 1.25rem; }
+.public-v3 .v3-about-history-lead { font-size: 1.25rem; font-weight: 750; margin-block-end: 1.25rem; }
+.public-v3 .v3-about-history-later { padding-block-start: 2.75rem; }
+.public-v3 .v3-about-history-ending { color: var(--accent); font-size: clamp(1.125rem, 2vw, 1.5rem); font-weight: 750; margin-block: 1.5rem 2rem; }
+.public-v3 .v3-memory-slot--history { max-inline-size: 22rem; margin-inline: auto; transform: rotate(-2deg); }
+.public-v3 .v3-memory-slot--history .v3-memory-canvas { aspect-ratio: 2 / 1; }
+.public-v3 .v3-about-welcome { padding-block: 2.5rem var(--v3-about-space); border-block-start: 1px solid var(--border); }
+.public-v3 .v3-about-welcome-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); align-items: start; gap: clamp(2rem, 5vw, 5rem); margin-block-start: 2rem; }
+.public-v3 .v3-about-welcome-note { padding: clamp(1.5rem, 3vw, 2.5rem); background: var(--surface); border: 1px solid var(--border); border-radius: 1.5rem 1.5rem .25rem 1.5rem; box-shadow: .4rem .4rem 0 color-mix(in srgb, var(--foliage) 18%, transparent); }
+.public-v3 .v3-about-welcome-note > span { display: block; font-size: 2rem; line-height: 1; margin-block-end: 1rem; color: var(--foliage); }
+.public-v3 .v3-about-welcome-note .v3-about-copy { color: var(--text); font-size: 1.125rem; }
+.public-v3 .v3-about-welcome-ending { font-size: clamp(1.5rem, 3vw, 2.25rem); letter-spacing: -.035em; color: var(--accent); border-inline-start: 4px solid var(--foliage); padding-inline-start: 1.25rem; margin-block-start: 2.5rem; }
+.public-v3 .v3-about-founder { --v3-founder-message-bg: color-mix(in srgb, var(--featured) 90%, var(--surface)); padding: clamp(1.25rem, 4vw, 3rem); border-radius: 1.75rem 1.75rem .5rem 1.75rem; background: var(--featured); color: var(--on-featured); }
+.public-v3 .v3-about-founder .v3-about-section-title { margin-block-end: 2rem; }
+.public-v3 .v3-founder-layout { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 2fr); align-items: start; gap: clamp(1.5rem, 4vw, 3rem); }
+.public-v3 .v3-founder-profile { text-align: center; }
+.public-v3 .v3-founder-avatar { padding: 1rem; border-radius: 1rem; background: var(--surface); }
+.public-v3 .v3-founder-avatar img { display: block; inline-size: 100%; block-size: auto; object-fit: contain; }
+.public-v3 .v3-founder-name { font-size: 1.75rem; font-weight: 750; margin-block-start: 1rem; letter-spacing: -.04em; }
+.public-v3 .v3-about-founder .v3-founder-handle { color: var(--foliage-on-dark); font-size: .875rem; }
+.public-v3 .v3-founder-message { position: relative; min-inline-size: 0; border: 1px solid color-mix(in srgb, var(--on-featured) 25%, var(--featured)); border-radius: .3rem 1.25rem 1.25rem 1.25rem; padding: clamp(1.25rem, 3vw, 2rem); background: var(--v3-founder-message-bg); }
+.public-v3 .v3-founder-message::before { content: ''; position: absolute; inset: 1.5rem auto auto -.75rem; inline-size: .75rem; block-size: 1rem; background: var(--v3-founder-message-bg); clip-path: polygon(100% 0,100% 100%,0 0); }
+.public-v3 .v3-about .v3-founder-title { font-size: clamp(1.5rem, 2.6vw, 2rem); margin: 0 0 .5rem; }
+.public-v3 .v3-about .v3-founder-byline { color: var(--foliage-on-dark); font-size: .8125rem; margin-block-end: 1.75rem; }
+.public-v3 .v3-founder-message .v3-about-copy { color: var(--on-featured); }
+.public-v3 .v3-founder-signoff { border-block-start: 1px solid color-mix(in srgb, var(--on-featured) 25%, var(--featured)); margin-block-start: 1.75rem; padding-block-start: 1.5rem; }
+.public-v3 .v3-founder-signoff p:first-child { color: var(--foliage-on-dark); font-size: 1.5rem; }
+.public-v3 .v3-founder-signoff p + p { margin-block-start: .5rem; font-size: .875rem; }
+.public-v3 .v3-about-farewell { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 1.5rem; padding-block-start: 3rem; }
+.public-v3 .v3-about-farewell > .crunch-mark { inline-size: 3rem; block-size: 4rem; }
+.public-v3 .v3-about-closing { font-size: clamp(1.25rem, 2.2vw, 1.75rem); line-height: 1.3; font-weight: 750; letter-spacing: -.025em; }
+.public-v3 .v3-about-closing span { color: var(--foliage-text); }
+.public-v3 .v3-about-farewell .v3-page-actions { margin: 0; padding: 0; border: 0; }
+@media (max-width: 68.75rem) {
+  .public-v3 .v3-about-chapters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .public-v3 .v3-about-farewell { grid-template-columns: auto minmax(0,1fr); }
+  .public-v3 .v3-about-farewell .v3-page-actions { grid-column: 2; }
+}
+@media (max-width: 47.5rem) {
+  .public-v3 .v3-about-opening,
+  .public-v3 .v3-about-history-grid,
+  .public-v3 .v3-about-welcome-grid,
+  .public-v3 .v3-founder-layout { grid-template-columns: minmax(0,1fr); }
+  .public-v3 .v3-about-opening h1 { font-size: clamp(2.125rem, 7.5vw, 3.25rem); }
+  .public-v3 .v3-about-scrapbook { max-inline-size: 27rem; margin-inline: auto; inline-size: 100%; padding-block-start: .75rem; }
+  .public-v3 .v3-about-spark { inset-block-start: -.75rem; font-size: 2.25rem; }
+  .public-v3 .v3-memory-slot--opening,
+  .public-v3 .v3-memory-slot--history { transform: none; }
+  .public-v3 .v3-about-history-later { padding-block-start: 0; }
+  .public-v3 .v3-founder-profile { display: grid; grid-template-columns: 8rem minmax(0,1fr); column-gap: 1rem; text-align: start; align-items: center; }
+  .public-v3 .v3-founder-avatar { grid-row: span 2; padding: .6rem; }
+  .public-v3 .v3-founder-name { margin: 0; align-self: end; font-size: 1.5rem; }
+  .public-v3 .v3-founder-handle { align-self: start; }
+  .public-v3 .v3-founder-message::before { inset: -.75rem auto auto 1.5rem; inline-size: 1rem; block-size: .75rem; clip-path: polygon(0 0,0 100%,100% 100%); }
+}
+@media (max-width: 25rem) {
+  .public-v3 .v3-about-chapters { grid-template-columns: minmax(0,1fr); }
+  .public-v3 .v3-about-chapters li { padding: 1rem; }
+  .public-v3 .v3-founder-profile { grid-template-columns: 6rem minmax(0,1fr); }
+  .public-v3 .v3-founder-handle { font-size: .75rem; }
+}
