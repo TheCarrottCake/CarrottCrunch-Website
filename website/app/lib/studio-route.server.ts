@@ -10,7 +10,9 @@ export async function studioEditorLoader(request: Request, env: MediaEnvironment
     try {
         const { session, db } = await studioSession(request, env, false, development);
         const saved = id ? await studioGet(db, id) : null;
-        const snapshot: StudioSnapshot = saved?.snapshot || { title: ['homepage', 'banners', 'gallery'].includes(kind) ? ({ homepage: 'Homepage showcase', banners: 'Homepage banners', gallery: 'Community Creations' }[kind as 'homepage'] || 'Community Creations') : '', body_text: '', coverId: '', items: ['homepage', 'banners', 'gallery'].includes(kind) ? [] : undefined };
+        const snapshot: StudioSnapshot = saved?.snapshot || (kind === 'about-memories'
+            ? {title:'About memories',body_text:'',memories:{}}
+            : { title: ['homepage', 'banners', 'gallery'].includes(kind) ? ({ homepage: 'Homepage showcase', banners: 'Homepage banners', gallery: 'Community Creations' }[kind as 'homepage'] || 'Community Creations') : '', body_text: '', coverId: '', items: ['homepage', 'banners', 'gallery'].includes(kind) ? [] : undefined });
         return data({ ...await studioIdentity(session, env), notice:new URL(request.url).searchParams.get('done')==='1'?'Changes saved.':'', document: saved?.document || null, snapshot, kind: saved?.document.kind || kind, images: saved ? await studioImages(db, saved.document.id, saved.document.revision) : {}, history: saved ? await studioHistory(db, saved.document.id) : [] }, { headers: studioHeaders });
     }
     catch (e) {
@@ -30,7 +32,7 @@ export async function studioEditorAction(request: Request, env: MediaEnvironment
             if (!id)
                 throw new StudioError('Save this content first.');
             await studioAction(env, session, id, version, intent, undefined, Number(form.get('restoreRevision')));
-            return redirect(['homepage', 'banners', 'gallery'].includes(kind) ? `/control/collections/${kind}?done=1` : intent === 'delete' ? '/control/posts' : `/control/posts/${id}?done=1`, { status: 303, headers: studioHeaders });
+            return redirect(['homepage', 'banners', 'gallery', 'about-memories'].includes(kind) ? `/control/collections/${kind}?done=1` : intent === 'delete' ? '/control/posts' : `/control/posts/${id}?done=1`, { status: 303, headers: studioHeaders });
         }
         if (!['save', 'publish', 'schedule'].includes(intent))
             throw new StudioError('Choose Save, Publish or Schedule.');
@@ -61,7 +63,7 @@ export async function studioEditorAction(request: Request, env: MediaEnvironment
                 throw new StudioError('Choose a 15-minute publication time.');
         }
         const docId = await studioSave(env, session, id || null, kind, snapshot, version, intent === 'publish', due);
-        return redirect(['homepage', 'banners', 'gallery'].includes(kind) ? `/control/collections/${kind}?done=1` : `/control/posts/${docId}?done=1`, { status: 303, headers: studioHeaders });
+        return redirect(['homepage', 'banners', 'gallery', 'about-memories'].includes(kind) ? `/control/collections/${kind}?done=1` : `/control/posts/${docId}?done=1`, { status: 303, headers: studioHeaders });
     }
     catch (e) {
         const failure = studioFailure(e);

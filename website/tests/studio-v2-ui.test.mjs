@@ -8,12 +8,13 @@ import * as jsx from 'react/jsx-runtime';
 import {renderToStaticMarkup as render} from 'react-dom/server';
 import {ContentBody} from '../app/components/content-body.ts';
 import * as eventTime from '../app/lib/event-time.ts';
+import * as memories from '../app/lib/about-memories.ts';
 import {normalizeSnapshot} from '../app/lib/studio.server.ts';
 
 async function components(){
- const imports={react:React,'react/jsx-runtime':jsx,'./content-body':{ContentBody},'../lib/event-time':eventTime,'react-router':{Form:'form',Link:({to,...props})=>React.createElement('a',{...props,href:to}),useNavigation:()=>({state:'idle'})}};
+ const imports={'../lib/about-memories':memories,react:React,'react/jsx-runtime':jsx,'./content-body':{ContentBody,safeContentHref:(value)=>value.startsWith('/')||value.startsWith('https://')?value:null},'../lib/event-time':eventTime,'react-router':{Form:'form',Link:({to,...props})=>React.createElement('a',{...props,href:to}),useNavigation:()=>({state:'idle'})}};
  async function load(name){const module={exports:{}};const source=await readFile(`app/components/${name}.tsx`,'utf8');vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,require:key=>{assert.ok(key in imports,key);return imports[key];}});imports['./'+name]=module.exports;return module.exports;}
- await load('studio-media-picker');await load('publication-time');const rendering=await load('studio-render');return {...rendering,...await load('studio-editor')};
+ await load('studio-media-picker');await load('about-memories-editor');await load('publication-time');const rendering=await load('studio-render');return {...rendering,...await load('studio-editor')};
 }
 const assetId='11111111-1111-4111-8111-111111111111';
 const image={assetId,src:'/safe/detail',cardSrc:'/safe/card',width:640,height:360,alt:'TEST screenshot',creator:'TEST Creator',requiredCredit:'',source:''};
@@ -38,4 +39,9 @@ test('V2 collection links cannot escape this website through slash or backslash 
 test('V2 rejects malformed image-entry payloads as validation errors',()=>{
  for(const items of [{},[null],[{id:assetId,assetId,title:5}]] )assert.throws(()=>normalizeSnapshot({title:'TEST',body_text:'',items},'gallery'),error=>error.status===400);
  assert.throws(()=>normalizeSnapshot({title:'TEST',body_text:'TEST',location:'x'.repeat(301)},'event'),error=>error.status===400);
+});
+
+test('About Memories editor has two fixed optional slots and one V2 toolbar',async()=>{
+ const {StudioEditor}=await components();const html=render(React.createElement(StudioEditor,{document:null,snapshot:{title:'About memories',body_text:'',memories:{}},kind:'about-memories',csrf:'test-only',role:'Moderator',images:{},history:[]}));
+ assert.equal((html.match(/class="editor-toolbar"/g)||[]).length,1);assert.equal((html.match(/Choose from Library/g)||[]).length,2);assert.equal((html.match(/Opening scrapbook/g)||[]).length,1);assert.match(html,/History scrapbook/);assert.doesNotMatch(html,/Add Slide|studio-body|Insert Image/);assert.match(html,/Save Draft/);assert.match(html,/>Publish</);
 });

@@ -11,7 +11,7 @@ async function component(path) {
   const result=await build({entryPoints:[path],bundle:true,write:false,format:'cjs',platform:'node',packages:'external',jsx:'automatic',plugins:[{
     name:'no-server-in-presentation-tests',setup(b){
       b.onResolve({filter:/\.server$/},args=>({path:args.path,namespace:'server-stub'}));
-      b.onLoad({filter:/.*/,namespace:'server-stub'},()=>({contents:'export const contentEnvironmentContext={},studioPublic=()=>{},studioImages=()=>{},loadPublicContent=()=>{},publicContentSource=()=>{},getPublishedAnnouncement=()=>{},getPublicStaffVoices=()=>[];'}));
+      b.onLoad({filter:/.*/,namespace:'server-stub'},()=>({contents:'export const contentEnvironmentContext={},studioPublic=()=>{},studioImages=()=>{},loadPublicContent=()=>{},publicContentSource=()=>{},getPublishedAnnouncement=()=>{},getPublicStaffVoices=()=>[],publicAboutMemories=()=>({});'}));
     }
   }]});
   const module={exports:{}};vm.runInNewContext(result.outputFiles[0].text,{module,exports:module.exports,require:createRequire(import.meta.url),console,Date,Intl,Response,URL});return module.exports;

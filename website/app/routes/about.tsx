@@ -1,3 +1,6 @@
+import {contentEnvironmentContext} from '../lib/cloudflare-context.server';
+import {publicAboutMemories} from '../lib/about-memories.server';
+import {AboutMemory} from '../components/about-memory';
 import type {ReactNode} from 'react';
 import {Link} from 'react-router';
 import {CrunchMark} from '../components/community';
@@ -6,17 +9,13 @@ import {getPublicStaffVoices} from '../content/staff-voices.server';
 import {StaffVoices} from '../components/staff-voices';
 import type {Route} from './+types/about';
 
-export function loader() { return {staffVoices: getPublicStaffVoices()}; }
+export async function loader({context}: Route.LoaderArgs) {
+  const {CONTENT_DB}=context.get(contentEnvironmentContext);
+  return {staffVoices:getPublicStaffVoices(),memories:await publicAboutMemories(CONTENT_DB)};
+}
 
 export function meta() {
   return [{title: `${publicPages.about.title}.`}, {name: 'description', content: publicPages.about.description}];
-}
-
-function MemoryPlaceholder({label, className = ''}: {label: string; className?: string}) {
-  return <figure className={`v3-memory-slot ${className}`}>
-    <div className="v3-memory-canvas" aria-hidden="true"><span>▧</span><span className="v3-memory-corner">+</span></div>
-    <figcaption><strong>{label}</strong><span>Awaiting a real historical image.</span></figcaption>
-  </figure>;
 }
 
 function SectionTitle({number, id, children}: {number: string; id: string; children: ReactNode}) {
@@ -43,7 +42,7 @@ export default function Page({loaderData}: Route.ComponentProps) {
       </div>
       <div className="v3-about-scrapbook">
         <span className="v3-about-spark" aria-hidden="true">✳</span>
-        <MemoryPlaceholder label="Community memories" className="v3-memory-slot--opening"/>
+        <AboutMemory image={loaderData?.memories?.opening} label="Community memories" className="v3-memory-slot--opening"/>
         <p className="v3-memory-caption">Room for real memories.</p>
       </div>
     </header>
@@ -59,7 +58,7 @@ export default function Page({loaderData}: Route.ComponentProps) {
       <div className="v3-about-history-grid">
         <div><p className="v3-about-history-lead">{historyParagraphs[0]}</p><Paragraphs items={historyParagraphs.slice(1, 3)}/></div>
         <div className="v3-about-history-later"><Paragraphs items={historyParagraphs.slice(3, -1)}/><p className="v3-about-history-ending">{historyParagraphs.at(-1)}</p>
-          <MemoryPlaceholder label="Shared worlds &amp; moments" className="v3-memory-slot--history"/>
+          <AboutMemory image={loaderData?.memories?.history} label="Shared worlds &amp; moments" className="v3-memory-slot--history"/>
         </div>
       </div>
     </section>

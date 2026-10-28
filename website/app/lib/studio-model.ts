@@ -1,4 +1,4 @@
-export type StudioKind = 'announcement' | 'event' | 'homepage' | 'banners' | 'gallery';
+export type StudioKind = 'announcement' | 'event' | 'homepage' | 'banners' | 'gallery' | 'about-memories';
 export type StudioItem = {
     id: string;
     assetId: string;
@@ -27,6 +27,7 @@ export type StudioSnapshot = {
         time: string;
         occurrence: string;
     };
+    memories?: Partial<Record<'opening' | 'history', {assetId: string; alt: string}>>;
     items?: StudioItem[];
     media?: {
         placement: string;

@@ -1,0 +1,67 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile,readdir} from 'node:fs/promises';
+import {getPlatformProxy,unstable_splitSqlQuery as splitSql} from 'wrangler';
+import {PhotonImage} from '@cf-wasm/photon';
+import {studioSave,studioGet,studioAction,studioHistory,studioSweep,normalizeSnapshot} from '../app/lib/studio.server.ts';
+import {publicAboutMemories} from '../app/lib/about-memories.server.ts';
+import {uploadMedia,trashMedia} from '../app/lib/media-db.server.ts';
+import {deliverStudioImage,studioSnapshotImages} from '../app/lib/studio-media.server.ts';
+import {validateMemoryRelease} from '../app/lib/about-memories-validation.server.ts';
+
+const blank=()=>({title:'About memories',body_text:'',memories:{}});
+test('About Memories accepts exactly two optional slots and derives its manifest',()=>{
+ const assetId=crypto.randomUUID(),entry={assetId,alt:'A community build beside the river'};
+ assert.deepEqual(normalizeSnapshot(blank(),'about-memories').media,[]);
+ assert.deepEqual(normalizeSnapshot({...blank(),memories:{opening:entry,history:entry},media:[{placement:'forged',assetId,alt:''}]},'about-memories').media.map(m=>m.placement),['memory:opening','memory:history']);
+ for(const memories of [{other:entry},{opening:null},{opening:{...entry,src:'https://unsafe.test'}},{opening:{assetId:'private/original.png',alt:'Description'}},{opening:{assetId,alt:23}},{opening:{assetId,alt:'x'.repeat(1001)}},[]])assert.throws(()=>normalizeSnapshot({...blank(),memories},'about-memories'));
+ for(const extra of [{coverId:assetId},{items:[]},{body_text:'Unapproved replacement story'},{title:'Different story'}])assert.throws(()=>normalizeSnapshot({...blank(),...extra},'about-memories'));
+ for(const alt of ['','  ','image','screenshot','https://example.test/image'])assert.throws(()=>validateMemoryRelease({...blank(),memories:{opening:{assetId,alt}}}),/Describe/);
+});
+
+test('About Memories exact releases, two-slot isolation, roles, alt, rights, history, Cron and trash protection',async t=>{
+ const proxy=await getPlatformProxy({configPath:'wrangler.jsonc',environment:'content_dev',persist:false,remoteBindings:false,envFiles:['tests/fixtures/empty-env.txt']});t.after(()=>proxy.dispose());
+ const db=proxy.env.CONTENT_DB,env={CONTENT_DB:db,MEDIA_BUCKET:proxy.env.MEDIA_BUCKET};
+ for(const name of (await readdir('migrations')).filter(n=>n.endsWith('.sql')).sort())await db.batch(splitSql(await readFile('migrations/'+name,'utf8')).map(sql=>db.prepare(sql)));
+ const actor={discord_user_id:'100000000000000001',role:'Moderator'};
+ await db.prepare("INSERT INTO staff_accounts(discord_user_id,role,created_at,updated_at) VALUES(?,'Moderator',1,1)").bind(actor.discord_user_id).run();
+ const assets=[];for(const color of [[108,128,86,255],[182,66,35,255]]){const pixel=new PhotonImage(new Uint8Array(color),1,1),f=new FormData();f.set('title','TEST memory fixture');f.set('image',new File([pixel.get_bytes()],'TEST-only.png'));pixel.free();assets.push(await uploadMedia(env,actor,f));}
+ const one={...blank(),memories:{opening:{assetId:assets[0],alt:'TEST community building beside a river'}}};
+ assert.deepEqual(await publicAboutMemories(db),{});
+ const id=await studioSave(env,actor,null,'about-memories',one,0);
+ assert.deepEqual(await publicAboutMemories(db),{});
+ let d=(await studioGet(db,id)).document;
+ await studioAction(env,actor,id,d.version,'publish');
+ let publicImages=await publicAboutMemories(db);assert.deepEqual(Object.keys(publicImages),['opening']);assert.equal(publicImages.opening.alt,one.memories.opening.alt);
+ const firstRelease=(await studioGet(db,id)).document.live_release_id;
+ const imageRequest=new Request('https://fixture.test/image');
+ assert.equal((await deliverStudioImage(imageRequest,env,firstRelease,assets[0],'detail')).status,200);
+ const both={...blank(),memories:{opening:{assetId:assets[1],alt:'TEST friends beside a different build'},history:{assetId:assets[0],alt:'TEST shared world and river'}}};
+ d=(await studioGet(db,id)).document;await studioSave(env,actor,id,'about-memories',both,d.version);
+ assert.equal((await publicAboutMemories(db)).opening.assetId,assets[0]);assert.ok(!(await publicAboutMemories(db)).history);
+ await assert.rejects(studioSave(env,actor,id,'about-memories',blank(),d.version,true),e=>e.status===409);
+ assert.equal((await studioSnapshotImages(db,both))['memory:history'].assetId,assets[0]);
+ await assert.rejects(trashMedia(db,assets[1],actor.discord_user_id,false,1),/referenced/);
+ d=(await studioGet(db,id)).document;await studioAction(env,actor,id,d.version,'publish');
+ publicImages=await publicAboutMemories(db);assert.equal(publicImages.opening.assetId,assets[1]);assert.equal(publicImages.history.assetId,assets[0]);
+ assert.equal((await deliverStudioImage(imageRequest,env,firstRelease,assets[0],'detail')).status,404);
+ await db.prepare("UPDATE media_assets SET alt_text='TEST centrally changed alt' WHERE id=?").bind(assets[1]).run();
+ assert.equal((await publicAboutMemories(db)).opening.alt,both.memories.opening.alt,'Alt belongs to the exact revision');
+ const invalid={...blank(),memories:{opening:{assetId:assets[0],alt:''}}};
+ d=(await studioGet(db,id)).document;await studioSave(env,actor,id,'about-memories',invalid,d.version);
+ d=(await studioGet(db,id)).document;await assert.rejects(studioAction(env,actor,id,d.version,'publish'),/Describe/);
+ await assert.rejects(studioAction(env,actor,id,d.version,'schedule',Date.now()+60000),/Describe/);
+ assert.equal((await publicAboutMemories(db)).opening.assetId,assets[1]);
+ await db.prepare('UPDATE media_assets SET rights_expires_at=1 WHERE id=?').bind(assets[1]).run();
+ assert.deepEqual(Object.keys(await publicAboutMemories(db)),['history']);
+ d=(await studioGet(db,id)).document;await assert.rejects(studioSave(env,actor,id,'about-memories',both,d.version,true),/unavailable|restrictions/);
+ assert.equal((await studioGet(db,id)).document.version,d.version,'Failed publication retains working revision and live release');
+ await studioSave(env,actor,id,'about-memories',one,d.version,false,Date.now()+1000);
+ assert.equal((await studioSweep(env,Date.now()+2000)).published,1);assert.equal((await studioSweep(env,Date.now()+3000)).published,0);
+ d=(await studioGet(db,id)).document;await studioAction(env,actor,id,d.version,'unpublish');assert.deepEqual(await publicAboutMemories(db),{});
+ d=(await studioGet(db,id)).document;await studioSave(env,actor,id,'about-memories',blank(),d.version,true);assert.deepEqual(await publicAboutMemories(db),{});
+ d=(await studioGet(db,id)).document;await studioAction(env,actor,id,d.version,'restore',undefined,1);assert.equal((await studioGet(db,id)).snapshot.memories.opening.assetId,assets[0]);assert.deepEqual(await publicAboutMemories(db),{});
+ await db.prepare('UPDATE staff_accounts SET active=0 WHERE discord_user_id=?').bind(actor.discord_user_id).run();
+ d=(await studioGet(db,id)).document;await assert.rejects(studioSave(env,actor,id,'about-memories',one,d.version,true));
+ assert.ok((await studioHistory(db,id)).length>=6);assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);
+});

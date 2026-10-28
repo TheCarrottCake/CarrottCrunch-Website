@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {unstable_splitSqlQuery as splitSql} from 'wrangler';
+import {PhotonImage} from '@cf-wasm/photon';
+import {aboutRuntime} from './fixtures/about-memories-runtime.mjs';
+import {studioGet,studioAction} from '../app/lib/studio.server.ts';
+
+const r=await aboutRuntime({through0012:true});
+try {
+ const {mf,name,db,bucket,actor,cookie,csrf,request,post,origin}=r;
+ const path='/control/collections/about-memories',get=()=>request(path,{headers:{Cookie:cookie}});
+ assert.equal((await request(path)).status,403);
+ assert.equal((await get()).status,503,'Unapplied migration has an explicit safe readiness gate');
+ assert.equal((await request('/about')).status,200,'Existing About page remains usable before migration');
+ await db.batch(splitSql(await readFile('migrations/0013_about_memories.sql','utf8')).map(sql=>db.prepare(sql)));
+ assert.equal((await get()).status,200);
+ const pixel=new PhotonImage(new Uint8Array([108,128,86,255]),1,1),form=new FormData();form.set('image',new File([pixel.get_bytes()],'TEST-memory.png',{type:'image/png'}));pixel.free();
+ const uploadRequest=new Request(origin,{method:'POST',body:form});
+ const uploaded=await request('/control/studio-media',{method:'POST',headers:{Cookie:cookie,Origin:origin,'X-CSRF-Token':csrf,'Content-Type':uploadRequest.headers.get('Content-Type')},body:new Uint8Array(await uploadRequest.arrayBuffer())});assert.equal(uploaded.status,200,await uploaded.clone().text());const asset=(await uploaded.json()).assets[0];
+ let snapshot={title:'About memories',body_text:'',memories:{opening:{assetId:asset.id,alt:'TEST friends building a shared village'},history:{assetId:asset.id,alt:'TEST shared world beside a river'}}};
+ const values=()=>({intent:'publish',version:'0',snapshot:JSON.stringify(snapshot)});
+ assert.equal((await post(values(),'bad')).status,403);
+ const crossOrigin=await request(path,{method:'POST',headers:{Cookie:cookie,Origin:'https://external.test','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({_csrf:csrf,...values()})});assert.ok([400,403].includes(crossOrigin.status));
+ assert.equal((await post({...values(),snapshot:JSON.stringify({...snapshot,memories:{opening:{assetId:asset.id,alt:''}}})})).status,400);
+ const published=await post(values());assert.equal(published.status,303,await published.clone().text());assert.equal(published.headers.get('Location'),path+'?done=1');
+ const documentId=(await db.prepare("SELECT id FROM studio_documents WHERE kind='about-memories'").first()).id;
+ let d=(await studioGet(db,documentId)).document;const live=d.live_release_id;
+ let html=await(await request('/about')).text();assert.match(html,/TEST friends building a shared village/);assert.match(html,/View full image: Community memories/);assert.doesNotMatch(html,/Awaiting a real historical image|v3-staff-voices/);
+ assert.equal((await request(`/media/studio/${live}/${asset.id}/detail`)).status,200);
+ const draft={...snapshot,memories:{opening:{assetId:asset.id,alt:'TEST private replacement description'}}};
+ assert.equal((await post({intent:'save',version:String(d.version),snapshot:JSON.stringify(draft)})).status,303);
+ html=await(await request('/about')).text();assert.doesNotMatch(html,/TEST private replacement description/);assert.match(html,/TEST shared world beside a river/);
+ const conflict=await post({intent:'publish',version:String(d.version),snapshot:JSON.stringify(draft)});assert.equal(conflict.status,409);assert.match(await conflict.text(),/TEST private replacement description/);
+ d=(await studioGet(db,documentId)).document;
+ await studioAction({CONTENT_DB:db,MEDIA_BUCKET:bucket},{discord_user_id:actor,role:'Moderator'},documentId,d.version,'schedule',Date.now()+50);
+ await new Promise(resolve=>setTimeout(resolve,75));await(await mf.getWorker(name)).scheduled({cron:'* * * * *',scheduledTime:Date.now()});
+ html=await(await request('/about')).text();assert.match(html,/TEST private replacement description/);assert.match(html,/Awaiting a real historical image/);
+ d=(await studioGet(db,documentId)).document;assert.equal(d.pending_release_id,null);
+ assert.equal((await post({intent:'unpublish',version:String(d.version)})).status,303);assert.match(await(await request('/about')).text(),/Awaiting a real historical image/);
+ await db.prepare('UPDATE staff_accounts SET active=0 WHERE discord_user_id=?').bind(actor).run();assert.equal((await get()).status,403);assert.equal((await post({intent:'publish',version:'0',snapshot:JSON.stringify(snapshot)})).status,403);
+ assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);
+ console.log('About Memories built Worker: migration gate, Moderator upload/publish, CSRF/origin, exact slots, alt errors, draft isolation, conflict input, real Cron, unpublish and inactive-role guards passed.');
+}finally{await r.mf.dispose();}

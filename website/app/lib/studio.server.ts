@@ -2,6 +2,7 @@ import type { StaffSession } from './staff-auth.server.ts';
 import { StudioError } from './content-studio.server.ts';
 import { studioDerivative } from './studio-media.server.ts';
 import type { MediaEnvironment } from './media-db.server.ts';
+import { normalizeMemories, validateMemoryRelease } from './about-memories-validation.server.ts';
 import { assetIdValid, type StudioKind, type StudioSnapshot, type StudioDocument } from './studio-model.ts';
 const roleGuard = "EXISTS(SELECT 1 FROM staff_accounts WHERE discord_user_id=? AND active=1 AND role IN('Moderator','Administrator','Owner'))";
 const audit = (db: D1Database, id: string, actor: string, action: string, details: object, now: number, guard = false) => db.prepare(`INSERT INTO audit_records(id,actor_id,action,details_json,created_at) VALUES(?,?,'updated',${guard ? 'CASE WHEN changes()=1 THEN ? ELSE NULL END' : '?'},?)`).bind(crypto.randomUUID(), actor, JSON.stringify({ entity: 'studio', documentId: id, operation: action, ...details }), now);
@@ -19,6 +20,7 @@ export async function studioHistory(db: D1Database, id: string) { return (await 
 }>()).results; }
 export function normalizeSnapshot(input: StudioSnapshot, kind: StudioKind): StudioSnapshot {
     if(!input||typeof input!=='object'||Array.isArray(input))throw new StudioError('Check the content.');
+    if(kind === 'about-memories')return normalizeMemories(input);
     const s = structuredClone(input);
     delete s.scheduleInput;
     if (typeof s.title !== 'string' || s.title.length > 160 || !s.title.trim())
@@ -73,10 +75,11 @@ export async function studioSave(env: MediaEnvironment, actor: StaffSession, id:
     const db = env.CONTENT_DB, now = Date.now(), snapshot = normalizeSnapshot(input, kind), current = id ? await studioGet(db, id) : null;
     if (current && (current.document.version !== version || current.document.kind !== kind))
         throw new StudioError('This content changed. Your input is preserved; compare with the latest saved version.', 409);
-    if (!['announcement', 'event', 'homepage', 'gallery', 'banners'].includes(kind))
+    if (!['announcement', 'event', 'homepage', 'gallery', 'banners', 'about-memories'].includes(kind))
         throw new StudioError('Unknown content type.');
     if (releaseDue !== undefined && (!Number.isSafeInteger(releaseDue) || releaseDue <= now))
         throw new StudioError('Choose a future publication time.');
+    if(kind === 'about-memories' && (publish || releaseDue !== undefined))validateMemoryRelease(snapshot);
     for (const assetId of new Set(snapshot.media!.map(m => m.assetId))) {
         const asset = await db.prepare('SELECT id FROM media_assets WHERE id=? AND deleted_at IS NULL').bind(assetId).first();
         if (!asset)
@@ -106,7 +109,7 @@ export async function studioAction(env: MediaEnvironment, actor: StaffSession, i
     const db = env.CONTENT_DB;
     if (!db)
         throw new StudioError('Content storage unavailable.', 503);
-    const { document: d } = await studioGet(db, id);
+    const { document: d, snapshot } = await studioGet(db, id);
     if (d.version !== version)
         throw new StudioError('This content changed. Reload the saved copy before retrying.', 409);
     if (intent === 'restore') {
@@ -126,6 +129,7 @@ export async function studioAction(env: MediaEnvironment, actor: StaffSession, i
     if (intent === 'schedule' && (!Number.isSafeInteger(due) || due! <= now))
         throw new StudioError('Choose a future publication time.');
     if (['publish', 'schedule'].includes(intent)) {
+        if(d.kind === 'about-memories')validateMemoryRelease(snapshot);
         const rows = await db.prepare('SELECT DISTINCT asset_id FROM studio_media_references WHERE document_id=? AND revision=?').bind(id, d.revision).all<{
             asset_id: string;
         }>();

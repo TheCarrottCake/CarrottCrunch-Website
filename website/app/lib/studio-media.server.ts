@@ -4,6 +4,7 @@ import { assetIdValid, type StudioImage, type StudioSnapshot } from './studio-mo
 /** Rehydrate unsaved selections after a rejected form without changing any revision. */
 export async function studioSnapshotImages(db: D1Database, snapshot: StudioSnapshot) {
     const placements = [{placement:'cover',assetId:snapshot.coverId||''},
+        ...(['opening','history'] as const).map(slot=>({placement:`memory:${slot}`,assetId:snapshot.memories?.[slot]?.assetId||''})),
         ...(Array.isArray(snapshot.items)?snapshot.items.slice(0,100).map(item=>({placement:item.id,assetId:item.assetId})):[]),
         ...Array.from(String(snapshot.body_text||'').matchAll(/!\[[^\]\n]*\]\(media:([a-f0-9-]{36})\)/g), (match,index)=>({placement:`inline:${index}`,assetId:match[1]}))]
         .filter(item=>assetIdValid(item.assetId)).slice(0,100);

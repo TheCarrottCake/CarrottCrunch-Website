@@ -9,7 +9,7 @@ export type ControlDashboardProps = {
   role: StaffRole;
   csrf: string;
   children?: ReactNode;
-  section: 'Overview' | 'Media Library' | 'News & Events' | 'Posts & Events' | 'Homepage' | 'Community Gallery';
+  section: 'Overview' | 'Media Library' | 'News & Events' | 'Posts & Events' | 'Homepage' | 'Community Gallery' | 'About Memories';
   counts?: {pending:number|null;overdue:number|null}|null;
 };
 

@@ -696,3 +696,9 @@
   .public-v3 .v3-staff-voices-grid { grid-template-columns: minmax(0,1fr); }
   .public-v3 .v3-gallery-tile[data-featured="true"] .v3-gallery-tile-image { aspect-ratio: 4 / 3; }
 }
+
+/* Published About Memories retain the existing scrapbook frame geometry. */
+.public-v3 .v3-memory-canvas--image { overflow: hidden; border: 0; }
+.public-v3 .v3-memory-canvas--image > img { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: cover; object-position: center; }
+.public-v3 .v3-memory-slot figcaption a { text-decoration: underline; }
+.public-v3 .v3-memory-slot .v3-gallery-view { justify-self: start; margin-block-start: .5rem; white-space: normal; }

@@ -10,6 +10,7 @@ export type DashboardTool = {
 const tools: readonly DashboardTool[] = [
   { id: 'news', href: '/control/posts', name: 'Posts & Events', description: 'Create, preview and publish community content.', minimumRole: 'Moderator' },
   { id: 'gallery', href: '/control/collections/gallery', name: 'Community Gallery', description: 'Community gallery moderation.', minimumRole: 'Moderator' },
+  { id: 'about-memories', href: '/control/collections/about-memories', name: 'About Memories', description: 'The two About page scrapbook images.', minimumRole: 'Moderator' },
   { id: 'media', href: '/control/media', name: 'Media Library', description: 'Media for community content.', minimumRole: 'Moderator' },
   { id: 'profiles', name: 'Staff Profiles', description: 'Staff-profile review and approvals.', minimumRole: 'Administrator' },
   { id: 'homepage', href: '/control/collections/homepage', name: 'Homepage', description: 'Showcase slides and banners.', minimumRole: 'Moderator' },
