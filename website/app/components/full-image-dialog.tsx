@@ -2,10 +2,10 @@ import {useEffect, useId, useRef, useState} from 'react';
 import {safeContentHref} from './content-body';
 import {isPublicHeroImage, type CommunityHeroSlide} from '../lib/community-hero';
 
-type Props = {image: CommunityHeroSlide | null; onOpenChange: (open: boolean) => void};
+type Props = {image: CommunityHeroSlide | null; onOpenChange?: (open: boolean) => void; variant?: 'hero' | 'gallery'; triggerLabel?: string};
 
 /** A full presentation of the same guarded derivative, never an original URL. */
-export function FullImageDialog({image, onOpenChange}: Props) {
+export function FullImageDialog({image, onOpenChange, variant = 'hero', triggerLabel}: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -38,15 +38,15 @@ export function FullImageDialog({image, onOpenChange}: Props) {
   const close = () => dialog.current?.close();
   const source = shown?.creditSource ? safeContentHref(shown.creditSource) : null;
   return <>
-    <button ref={trigger} type="button" className="button v3-hero-view" aria-haspopup="dialog"
+    <button ref={trigger} type="button" className={variant === 'hero' ? 'button v3-hero-view' : 'button secondary v3-gallery-view'} aria-haspopup="dialog" aria-label={triggerLabel}
       disabled={!image || !isPublicHeroImage(image.image)}
       onClick={() => {
         if (!image || !isPublicHeroImage(image.image)) return;
-        setFailed(false); setLoaded(false); setShown({...image}); onOpenChange(true);
+        setFailed(false); setLoaded(false); setShown({...image}); onOpenChange?.(true);
       }}>View full image</button>
     <dialog ref={dialog} className="v3-full-image-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`}
       onClose={() => {
-        setShown(null); onOpenChange(false);
+        setShown(null); onOpenChange?.(false);
         if (trigger.current && !trigger.current.disabled) trigger.current.focus({preventScroll: true});
         else document.getElementById('main')?.focus({preventScroll: true});
       }}

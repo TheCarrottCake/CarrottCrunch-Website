@@ -2,6 +2,11 @@ import type {ReactNode} from 'react';
 import {Link} from 'react-router';
 import {CrunchMark} from '../components/community';
 import {publicPages} from '../content/public-pages';
+import {getPublicStaffVoices} from '../content/staff-voices.server';
+import {StaffVoices} from '../components/staff-voices';
+import type {Route} from './+types/about';
+
+export function loader() { return {staffVoices: getPublicStaffVoices()}; }
 
 export function meta() {
   return [{title: `${publicPages.about.title}.`}, {name: 'description', content: publicPages.about.description}];
@@ -22,7 +27,7 @@ function Paragraphs({items}: {items: readonly string[]}) {
   return <div className="v3-about-copy">{items.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>;
 }
 
-export default function Page() {
+export default function Page({loaderData}: Route.ComponentProps) {
   const page = publicPages.about;
   const [history, welcome, founder] = page.sections;
   const historyParagraphs = history.text.split('\n\n');
@@ -84,6 +89,7 @@ export default function Page() {
       </div>
     </section>
 
+    <StaffVoices contributions={loaderData?.staffVoices || []}/>
     <div className="v3-about-farewell"><CrunchMark/>
       <p className="v3-about-closing">Good games. Great people.<br/><span>A little extra crunch.</span></p>
       <div className="v3-page-actions">
