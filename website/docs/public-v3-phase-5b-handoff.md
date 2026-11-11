@@ -1,5 +1,7 @@
 # Public V3 Phase 5B — About Memories handoff
 
+> Current status - November 10, 2026: Phase 5B was committed as `898cd5a0e86b23a4bc7e1e7ddec1889a21c5a62b`. Its uncommitted/checkpoint statements below are historical. Migration 0013 was applied successfully to persistent local D1 on October 27, 2026 (Toronto time). No remote migration or production deployment is authorized. The legacy standalone Worker harnesses remain historical pre-V2 checks; current Worker coverage is listed in the living status. See [project status](project-status.md).
+
 Implementation is uncommitted on `feature/cinematic-redesign-v3`, based on
 `84c62cd` (completed Phase 5A). **Finalized locally: migration 0013 has been
 applied after verified backup and preservation checks. No remote migration or

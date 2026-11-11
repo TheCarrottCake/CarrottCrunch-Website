@@ -131,25 +131,13 @@ See you around!
   ]
 },
   safety: {
-  "title": "Safety",
-  "eyebrow": "Look out for each other",
-  "description": "Find the official invitation and general online safety guidance here. Community-specific policies have not yet been published on this website.",
-  "sections": [
-    {
-      "title": "Use the official invitation",
-      "text": "Use the Join Discord link on this website to reach the configured official invitation. Be cautious with unsolicited links and requests for passwords or account tokens.",
-      "placeholder": false
-    },
-    {
-      "title": "Community policies",
-      "text": "Community-specific rules, joining requirements, and moderation procedures have not been published here yet. This page does not establish new community rules.",
-      "placeholder": true
-    },
-    {
-      "title": "Reporting information",
-      "text": "A dedicated reporting contact or website reporting form is not available here. For immediate danger, contact your local emergency services.",
-      "placeholder": false
-    }
+  title: "Safety",
+  eyebrow: "Good games. Good neighbours.",
+  description: "Community rules, Minecraft expectations and private Discord reporting guidance for CarrottCrunch.",
+  sections: [
+    {title: "Community rules", text: "CarrottCrunch is an 18+ community. Membership is intended for adults only."},
+    {title: "Reporting concerns", text: "For general community concerns, contact a CarrottCrunch Moderator privately through Discord."},
+    {title: "Staff accountability", text: "If your concern involves a staff member, contact an Administrator or the Owner instead."}
   ]
 },
 } satisfies Record<string, PublicPageContent>;

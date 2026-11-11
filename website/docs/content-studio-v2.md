@@ -1,5 +1,7 @@
 # Content Studio V2
 
+> Current status - November 10, 2026: Content Studio V2 is implemented and committed. Public V3 now includes Phases 1-5B. The latest migration is 0013, successfully applied to persistent local D1 on October 27, 2026 (Toronto time). Migration instructions below are historical setup guidance, not authorization to rerun migrations during maintenance. See [project status](project-status.md).
+
 V2 replaces the staff-facing publication and image approval workflow with **Create → Preview → Publish**. This document supersedes the approval instructions in the historical 05A–05D documentation. No production resources were changed during implementation.
 
 ## Repository audit and reuse

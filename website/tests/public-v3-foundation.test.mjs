@@ -27,7 +27,7 @@ const nodes=(value,predicate)=>!value||typeof value!=='object'?[]:Array.isArray(
 const one=(tree,predicate)=>{const found=nodes(tree,predicate);assert.equal(found.length,1);return found[0];};
 async function layoutHarness(){
  const refs=[];let cursor=0,effects=[];const location={pathname:'/',hash:''},navigation={state:'idle'};
- const imports={react:{useRef:value=>refs[cursor++]??={current:value},useEffect:callback=>effects.push(callback)},'react/jsx-runtime':jsx,'react-router':{data:value=>value,Outlet:'outlet',useLocation:()=>location,useNavigation:()=>navigation},'../components/community':{Header:'public-header',Footer:'public-footer'},'../public-v3.css':{},'../lib/cloudflare-context.server':{},'../lib/staff-auth.server':{}};
+ const imports={react:{useRef:value=>refs[cursor++]??={current:value},useEffect:callback=>effects.push(callback)},'react/jsx-runtime':jsx,'react-router':{data:value=>value,Outlet:'outlet',useLocation:()=>location,useNavigation:()=>navigation},'../components/community':{Header:'public-header',Footer:'public-footer'},'../public-v3.css':{},'../games.css':{},'../lib/cloudflare-context.server':{},'../lib/staff-auth.server':{}};
  const module={exports:{}};const source=(await readFile('app/routes/public-layout.tsx','utf8')).replaceAll('import.meta.env.DEV','false');
  vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{module,exports:module.exports,require:name=>{assert.ok(name in imports,name);return imports[name];}});
  return {location,navigation,render(account){cursor=0;effects=[];return module.exports.default({loaderData:{account}});},flush(){for(const effect of effects)effect();},headers:module.exports.headers};

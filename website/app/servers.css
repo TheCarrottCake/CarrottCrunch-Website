@@ -1,0 +1,127 @@
+/* Dedicated Phase 6A pages only; shared homepage/workspace rules stay untouched. */
+.public-v3 .servers-page { --v3-content-max: 82rem; --v3-server-section-gap: clamp(2.5rem, 4vw, 4rem); padding-block: clamp(2rem, 3vw, 3rem) 2.5rem; }
+.public-v3 .servers-page h1 { font-size: clamp(2.5rem, 5.2vw, 5rem); line-height: 1.04; letter-spacing: -.055em; text-wrap: balance; }
+.public-v3 .servers-page h2 { font-size: clamp(1.75rem, 3.2vw, 3rem); line-height: 1.14; letter-spacing: -.04em; text-wrap: balance; }
+.public-v3 .servers-page h3 { font-size: 1.2rem; line-height: 1.3; }
+.public-v3 .servers-page p, .public-v3 .servers-page li, .public-v3 .servers-page dd { line-height: 1.75; overflow-wrap: anywhere; }
+.public-v3 .v3-server-kicker { font-size: .75rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+.public-v3 .v3-server-kicker span { padding-inline: .4rem; }
+.public-v3 .v3-server-catalog { display: grid; gap: 2rem; }
+.public-v3 .v3-server-card { display: grid; grid-template-columns: 1.2fr 1fr; border: 1px solid var(--border); border-radius: 1.25rem; overflow: hidden; background: var(--surface); }
+.public-v3 .v3-server-card--featured { background: var(--featured); color: var(--on-featured); border: 0; }
+.public-v3 .v3-server-artwork { min-inline-size: 0; margin: 0; display: flex; flex-direction: column; }
+.public-v3 .v3-server-artwork-frame { position: relative; flex: 1; min-block-size: 22rem; overflow: hidden; background: var(--featured); }
+.public-v3 .v3-server-artwork img { display: block; inline-size: 100%; block-size: 100%; position: absolute; inset: 0; object-fit: cover; object-position: center; }
+.public-v3 .v3-server-artwork figcaption { padding: .75rem 1rem; font-size: .75rem; line-height: 1.6; background: var(--surface); color: var(--text-muted); }
+.public-v3 .v3-server-required-credit { display: block; }
+.public-v3 .v3-server-card-copy { padding: clamp(1.5rem, 3vw, 2.75rem); display: flex; flex-direction: column; align-items: flex-start; gap: 1.25rem; min-inline-size: 0; }
+.public-v3 .v3-server-card--featured .v3-server-kicker, .public-v3 .v3-server-card--featured .v3-server-card-context { color: var(--on-featured); }
+.public-v3 .v3-server-card-context { font-size: .875rem; }
+.public-v3 .v3-server-access-label { font-size: .8125rem; padding: .35rem .75rem; border: 1px solid currentColor; border-radius: 2rem; }
+.public-v3 .servers-page .v3-page-actions { margin-block-start: .5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.public-v3 .v3-server-text-link { font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .25rem; display: inline-flex; align-items: center; gap: .5rem; min-block-size: 2.75rem; }
+.public-v3 .v3-server-card--featured a:focus-visible, .public-v3 .v3-server-onboarding a:focus-visible { outline-color: var(--supporting); }
+.public-v3 .v3-server-hub-note { margin-block-start: var(--v3-server-section-gap); border-block: 1px solid var(--border); padding-block: 1.75rem; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; }
+.public-v3 .v3-server-hub-note h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); margin-block: .5rem .75rem; }
+.public-v3 .v3-server-hub-note p { max-inline-size: 60ch; }
+.public-v3 .v3-server-cog { color: var(--foliage); font-size: 4rem; line-height: 1; display: inline-block; }
+.public-v3 .v3-server-breadcrumb { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; font-size: .875rem; margin-block-end: 1.5rem; }
+.public-v3 .v3-server-breadcrumb a { min-block-size: 2.75rem; display: inline-flex; align-items: center; gap: .5rem; text-decoration: underline; text-underline-offset: .25rem; }
+.public-v3 .v3-server-detail-opening { display: grid; grid-template-columns: 1fr 1.3fr; gap: clamp(2rem, 3vw, 3rem); align-items: center; }
+.public-v3 .v3-server-detail-opening > div { padding-block: 1rem; }
+.public-v3 .v3-server-detail-opening h1 { margin-block: 1.25rem 1.5rem; }
+.public-v3 .v3-server-detail-lead { font-size: clamp(1.3rem, 2vw, 1.65rem); font-weight: 750; margin-block-end: 1rem; }
+.public-v3 .v3-server-detail-opening .v3-server-artwork { border-radius: 1rem; overflow: hidden; }
+.public-v3 .v3-server-detail-opening .v3-page-actions { margin-block-start: 1.75rem; }
+.public-v3 .v3-server-activities, .public-v3 .v3-server-practical, .public-v3 .v3-server-moments, .public-v3 .v3-server-onboarding { margin-block-start: var(--v3-server-section-gap); }
+.public-v3 .v3-server-section-heading { max-inline-size: 44rem; }
+.public-v3 .v3-server-section-heading h2 { margin-block: .75rem 1rem; }
+.public-v3 .v3-server-activity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-block-start: 1.75rem; }
+.public-v3 .v3-server-activity-grid article { position: relative; padding: 1.25rem 1.25rem 0 0; border-block-start: 2px solid var(--foliage); }
+.public-v3 .v3-server-activity-grid h3 { margin-block: 1.25rem .75rem; }
+.public-v3 .v3-server-onboarding { background: var(--featured); color: var(--on-featured); border-radius: 1.25rem; padding: clamp(1.5rem, 3vw, 2.75rem); display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(2rem, 5vw, 5rem); scroll-margin-top: 8rem; }
+.public-v3 .v3-server-onboarding .v3-server-kicker { color: var(--on-featured); }
+.public-v3 .v3-server-onboarding .v3-server-cog { color: var(--supporting); margin-block-end: 1.5rem; }
+.public-v3 .v3-server-onboarding-intro h2 { margin-block: .75rem 1rem; }
+.public-v3 .v3-server-onboarding-intro .button { margin-block-start: 1.75rem; }
+.public-v3 .v3-server-steps { padding: 0; margin: 0; list-style: none; }
+.public-v3 .v3-server-steps li { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; padding-block: 1.125rem; border-block-start: 1px solid color-mix(in srgb, var(--on-featured) 25%, transparent); }
+.public-v3 .v3-server-steps li > span { color: var(--supporting); font-size: .75rem; font-weight: 800; }
+.public-v3 .v3-server-steps h3 { margin-block-end: .5rem; }
+.public-v3 .v3-server-steps a { text-decoration: underline; text-underline-offset: .2rem; }
+.public-v3 .v3-server-practical { display: grid; grid-template-columns: 1.15fr .85fr; gap: 2.5rem; align-items: start; }
+.public-v3 .v3-server-practical article { padding: clamp(1.25rem, 2.2vw, 2rem); border-radius: 1rem; background: var(--surface); border: 1px solid var(--border); }
+.public-v3 .v3-server-practical h2 { margin-block: .5rem 1.125rem; font-size: clamp(1.6rem, 2.6vw, 2.25rem); }
+.public-v3 .v3-server-requirements dl { margin: 0; }
+.public-v3 .v3-server-requirements dl > div { padding-block: .65rem; border-block-start: 1px solid var(--border); }
+.public-v3 .v3-server-requirements dt { font-weight: 750; font-size: .875rem; }
+.public-v3 .v3-server-requirements dd { margin: .25rem 0 0; }
+.public-v3 .v3-server-expectations ul { padding-inline-start: 1.25rem; margin-block-end: 1.5rem; }
+.public-v3 .v3-server-expectations li + li { margin-block-start: .75rem; }
+.public-v3 .v3-server-moments { display: grid; grid-template-columns: 1.3fr .7fr; gap: 2.5rem; align-items: center; padding-block: 1.75rem; border-block: 1px solid var(--border); }
+.public-v3 .v3-server-moments h2 { margin-block: .75rem 1.25rem; }
+.public-v3 .v3-server-moments .v3-server-text-link { margin-block-start: 1rem; }
+.public-v3 .v3-server-moments-placeholder { min-block-size: 13rem; padding: 2rem; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; text-align: center; border: 1px dashed var(--foliage); border-radius: 1rem; background: color-mix(in srgb, var(--foliage) 8%, var(--surface)); }
+.public-v3 .v3-server-moments-placeholder > span:first-child { color: var(--foliage); font-size: 4rem; line-height: 1; }
+.public-v3 .v3-server-moments-placeholder p { font-size: 1.5rem; font-weight: 750; }
+.public-v3 .v3-server-moments-placeholder > span:last-child { font-size: .875rem; color: var(--text-muted); }
+.public-v3 .servers-page .v3-server-closing { justify-content: center; margin-block-start: var(--v3-server-section-gap); }
+.public-v3 .v3-server-artwork-empty { padding: 2rem; display: grid; place-content: center; gap: 1rem; text-align: center; color: var(--on-featured); min-block-size: 22rem; block-size: 100%; }
+.public-v3 .v3-server-artwork-empty > span { font-size: 4rem; color: var(--supporting); }
+
+/* Compact editorial opening and a graphic nod to gaming, never a server listing. */
+.public-v3 .v3-server-hub-opening { display: grid; grid-template-columns: 1.55fr .75fr; gap: 2rem; align-items: center; margin-block-end: 2rem; }
+.public-v3 .v3-server-hub-opening .v3-page-header { margin: 0; }
+.public-v3 .v3-server-hub-opening h1 { font-size: clamp(2.5rem, 4.6vw, 4.5rem); }
+.public-v3 .v3-server-hub-opening .v3-page-description { margin-block-start: 1rem; }
+.public-v3 .v3-server-play-note { position: relative; min-inline-size: 0; padding: 1.5rem; text-align: center; border-inline-start: 1px solid var(--border); }
+.public-v3 .v3-server-play-note > p { margin-block-start: 1rem; font-size: 1.5rem; font-weight: 800; letter-spacing: -.035em; }
+.public-v3 .v3-server-play-note > span { font-size: .875rem; color: var(--text-muted); }
+.public-v3 .v3-server-controller { position: relative; inline-size: min(15rem, 90%); block-size: 7rem; margin: 1rem auto; border: .35rem solid var(--featured); border-radius: 3rem 3rem 2rem 2rem; transform: rotate(-8deg); background: var(--foliage); box-shadow: .6rem .65rem 0 color-mix(in srgb, var(--foliage) 20%, transparent); }
+.public-v3 .v3-server-controller::before, .public-v3 .v3-server-controller::after { content: ''; position: absolute; inset-block-start: -1.25rem; inline-size: 2.5rem; block-size: .5rem; border-radius: 1rem; background: var(--featured); }
+.public-v3 .v3-server-controller::before { inset-inline-start: 2.5rem; }
+.public-v3 .v3-server-controller::after { inset-inline-end: 2.5rem; }
+.public-v3 .v3-server-dpad { position: absolute; inset: 2rem auto auto 2rem; inline-size: 2.6rem; block-size: 2.6rem; background: var(--on-featured); clip-path: polygon(33% 0, 67% 0, 67% 33%, 100% 33%, 100% 67%, 67% 67%, 67% 100%, 33% 100%, 33% 67%, 0 67%, 0 33%, 33% 33%); }
+.public-v3 .v3-server-controller-buttons { position: absolute; inset: 1.75rem 2rem auto auto; inline-size: 1.125rem; block-size: 1.125rem; border-radius: 50%; background: var(--on-featured); box-shadow: -1.3rem 1.4rem 0 var(--supporting); }
+.public-v3 .v3-server-community-ways { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; padding: 0; margin: .875rem 0 0; list-style: none; font-size: .8125rem; font-weight: 700; color: var(--foliage-text); }
+.public-v3 .v3-server-community-ways li::before { content: '+'; margin-inline-end: .5rem; }
+.public-v3 .v3-server-card--featured .v3-server-artwork-frame { min-block-size: 24rem; }
+.public-v3 .v3-server-detail-opening .v3-server-artwork-frame { min-block-size: 25rem; aspect-ratio: 1.4; }
+.public-v3 .v3-server-detail-opening > div > p:not(.v3-server-kicker) { max-inline-size: 52ch; }
+/* Fixed axle marks and a connecting rail suggest machinery without motion. */
+.public-v3 .v3-server-activity-grid article::after { content: ''; position: absolute; inset: -.375rem 1rem auto auto; inline-size: .625rem; block-size: .625rem; border: 2px solid var(--foliage); border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 .25rem var(--page-bg); }
+.public-v3 .v3-server-activity-grid .v3-section-index { display: inline-flex; padding: .25rem .5rem; border: 1px solid var(--border); border-radius: .25rem; background: var(--surface); }
+.public-v3 .v3-server-practical .v3-server-expectations { border: 0; border-inline-start: 2px solid var(--foliage); border-radius: 0; background: transparent; padding-block: .75rem; }
+.public-v3 .v3-server-requirements dl > div { display: grid; grid-template-columns: 8rem 1fr; gap: 1rem; }
+.public-v3 .v3-server-requirements dd { margin: 0; }
+.public-v3 .v3-server-moments-placeholder { position: relative; background: repeating-linear-gradient(135deg, transparent 0 12px, color-mix(in srgb, var(--foliage) 5%, transparent) 12px 13px), var(--surface); }
+
+@media (max-width: 64rem) {
+  .public-v3 .v3-server-hub-note { grid-template-columns: auto 1fr; }
+  .public-v3 .v3-server-hub-note > a { grid-column: 2; justify-self: start; }
+}
+@media (max-width: 47.5rem) {
+  .public-v3 .v3-server-hub-opening { grid-template-columns: 1fr; gap: 1rem; }
+  .public-v3 .v3-server-play-note { border: 0; border-block: 1px solid var(--border); display: grid; grid-template-columns: auto 1fr; align-items: center; padding: 1rem 0; text-align: start; column-gap: 1rem; }
+  .public-v3 .v3-server-controller { grid-row: span 2; inline-size: 7rem; block-size: 4rem; margin: .5rem; border-width: .2rem; border-radius: 1.5rem; }
+  .public-v3 .v3-server-controller::before, .public-v3 .v3-server-controller::after { inline-size: 1.25rem; inset-block-start: -.75rem; block-size: .3rem; }
+  .public-v3 .v3-server-controller::before { inset-inline-start: 1.25rem; }
+  .public-v3 .v3-server-controller::after { inset-inline-end: 1.25rem; }
+  .public-v3 .v3-server-dpad { inset: 1.1rem auto auto .75rem; inline-size: 1.5rem; block-size: 1.5rem; }
+  .public-v3 .v3-server-controller-buttons { inset: .9rem .8rem auto auto; inline-size: .65rem; block-size: .65rem; box-shadow: -.8rem .9rem 0 var(--supporting); }
+  .public-v3 .v3-server-play-note > p { font-size: 1.125rem; margin: 0; }
+  .public-v3 .v3-server-play-note > span { font-size: .8125rem; }
+  .public-v3 .v3-server-detail-opening .v3-server-artwork-frame, .public-v3 .v3-server-card--featured .v3-server-artwork-frame { min-block-size: 0; aspect-ratio: 4 / 3; }
+  .public-v3 .v3-server-requirements dl > div { grid-template-columns: 1fr; gap: .125rem; }
+
+  .public-v3 .v3-server-card, .public-v3 .v3-server-detail-opening, .public-v3 .v3-server-activity-grid, .public-v3 .v3-server-onboarding, .public-v3 .v3-server-practical, .public-v3 .v3-server-moments { grid-template-columns: 1fr; }
+  .public-v3 .v3-server-artwork-frame { min-block-size: 0; aspect-ratio: 4 / 3; }
+  .public-v3 .v3-server-hub-note { grid-template-columns: 1fr; gap: 1rem; }
+  .public-v3 .v3-server-hub-note > a { grid-column: 1; }
+  .public-v3 .v3-server-hub-note > .v3-server-cog { font-size: 3rem; }
+  .public-v3 .v3-server-detail-opening .v3-server-artwork { margin-block-start: .5rem; }
+  .public-v3 .v3-server-moments { gap: 1.5rem; }
+}
+
+.public-v3 .v3-server-beyond { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; padding-block-start: 1rem; }
+.public-v3 .v3-server-beyond > span { font-weight: 750; color: var(--foliage-text); }

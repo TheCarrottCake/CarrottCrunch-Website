@@ -1,0 +1,94 @@
+/* Original CSS genre compositions. These rules opt in only Games elements. */
+.public-v3 .v3-games-page { --v3-content-max: 82rem; }
+.public-v3 .v3-games-kicker { color: var(--foliage-text); font-size: .75rem; font-weight: 750; text-transform: uppercase; letter-spacing: .1em; }
+.public-v3 .v3-games-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1.5rem; }
+.public-v3 .v3-game-card { --game-scene: var(--surface); --game-ink: var(--text); position: relative; display: flex; flex-direction: column; min-inline-size: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 1.125rem 1.125rem .375rem 1.125rem; background: var(--surface); transition: transform 180ms ease, box-shadow 180ms ease; }
+.public-v3 .v3-game-face { position: relative; isolation: isolate; display: flex; align-items: end; min-block-size: 13rem; padding: 1.5rem; overflow: hidden; background: var(--game-scene); color: var(--game-ink); }
+.public-v3 .v3-game-face h3 { position: relative; z-index: 1; margin: 0; max-inline-size: 100%; font-family: var(--font-display); font-size: clamp(1.75rem,2.8vw,2.75rem); line-height: 1.05; letter-spacing: -.05em; text-wrap: balance; overflow-wrap: anywhere; }
+.public-v3 .v3-game-copy { padding: 1.125rem 1.5rem 1.25rem; display: flex; flex-direction: column; align-items: start; gap: .75rem; flex: 1; }
+.public-v3 .v3-game-genres { display: flex; flex-wrap: wrap; gap: .25rem .6rem; list-style: none; padding: 0; margin: 0; font-size: .75rem; font-weight: 750; color: var(--foliage-text); }
+.public-v3 .v3-game-genres li + li::before { content: '/'; margin-inline-end: .6rem; }
+.public-v3 .v3-game-copy > p { line-height: 1.65; font-size: .9375rem; }
+.public-v3 .v3-game-server-link, .public-v3 .v3-games-link { display: inline-flex; align-items: center; gap: .5rem; min-block-size: 2.75rem; text-decoration: underline; text-underline-offset: .25rem; font-weight: 700; }
+.public-v3 .v3-game-server-link { margin-block-start: auto; padding-block-start: .25rem; color: var(--accent); font-size: .8125rem; }
+.public-v3 .v3-game-card:focus-within { outline: 2px solid var(--accent); outline-offset: 4px; box-shadow: 0 .6rem 1.5rem color-mix(in srgb,var(--shadow) 10%,transparent); }
+.public-v3 .v3-game-card a:focus-visible, .public-v3 .v3-games-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: .125rem; }
+.public-v3 .v3-game-motif { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; transform: scale(var(--game-motif-scale,1)); transition: transform 200ms ease; }
+.public-v3 .v3-game-motif span { position: absolute; display: block; }
+/* Building forms: varied heights, no game textures or asset silhouettes. */
+.public-v3 .v3-game-card--blocks { --game-scene: color-mix(in srgb,var(--foliage) 18%,var(--surface)); }
+.public-v3 .v3-game-card--blocks .v3-game-face { background-image: linear-gradient(90deg, color-mix(in srgb,var(--foliage) 12%,transparent) 1px,transparent 1px),linear-gradient(color-mix(in srgb,var(--foliage) 12%,transparent) 1px,transparent 1px); background-size: 2rem 2rem; }
+.public-v3 .v3-game-card--blocks .v3-game-motif span { inline-size: 3rem; background: color-mix(in srgb,var(--foliage) 38%,var(--surface)); border: 2px solid color-mix(in srgb,var(--foliage) 50%,transparent); inset-block-start: 1.5rem; }
+.public-v3 .v3-game-card--blocks .v3-game-motif span:nth-child(1) { inset-inline-end: 1.5rem; block-size: 5rem; }
+.public-v3 .v3-game-card--blocks .v3-game-motif span:nth-child(2) { inset-inline-end: 4.75rem; block-size: 2.75rem; }
+.public-v3 .v3-game-card--blocks .v3-game-motif span:nth-child(3) { inset-inline-end: 8rem; block-size: 4rem; }
+.public-v3 .v3-game-card--blocks .v3-game-motif span:nth-child(n+4) { display: none; }
+/* Cargo straps and a caution edge, not a game logo. */
+.public-v3 .v3-game-card--cargo { --game-scene: var(--featured); --game-ink: var(--on-featured); }
+.public-v3 .v3-game-card--cargo .v3-game-face { border-block-start: .5rem solid transparent; border-image: repeating-linear-gradient(135deg,var(--supporting) 0 12px,var(--featured) 12px 24px) 8; }
+.public-v3 .v3-game-card--cargo h3 { letter-spacing: .05em; }
+.public-v3 .v3-game-card--cargo .v3-game-motif span:nth-child(1) { inline-size: 7rem; block-size: 5rem; inset: 1.25rem 1.5rem auto auto; border: 2px solid var(--supporting); transform: rotate(-7deg); opacity: .6; background: linear-gradient(90deg,transparent 30%,var(--supporting) 30% 33%,transparent 33% 65%,var(--supporting) 65% 68%,transparent 68%); }
+.public-v3 .v3-game-card--cargo .v3-game-motif span:nth-child(2) { inset: 3.75rem 2.5rem auto auto; inline-size: 7rem; block-size: 4rem; border: 2px solid var(--supporting); opacity: .3; }
+/* Static signal rings: atmosphere, never live monitoring or motion. */
+.public-v3 .v3-game-card--radar { --game-scene: var(--featured); --game-ink: var(--on-featured); }
+.public-v3 .v3-game-card--radar .v3-game-motif { background: repeating-radial-gradient(circle at 80% 15%,transparent 0 1.4rem,color-mix(in srgb,var(--foliage-on-dark) 35%,transparent) 1.4rem calc(1.4rem + 1px),transparent calc(1.4rem + 1px) 2.8rem); }
+.public-v3 .v3-game-card--radar .v3-game-motif span:nth-child(1) { inset: 1.75rem 3rem auto auto; inline-size: .6rem; block-size: .6rem; border-radius: 50%; background: var(--foliage-on-dark); box-shadow: -5rem 2rem 0 color-mix(in srgb,var(--foliage-on-dark) 65%,transparent); }
+/* Team-play energy from independent diagonal bands. */
+.public-v3 .v3-game-card--team { --game-scene: var(--accent); --game-ink: var(--on-action); }
+.public-v3 .v3-game-card--team .v3-game-motif span { inline-size: 2.5rem; block-size: 8rem; inset-block-start: -1rem; transform: skew(-25deg); background: color-mix(in srgb,var(--on-action) 18%,transparent); }
+.public-v3 .v3-game-card--team .v3-game-motif span:nth-child(1) { inset-inline-end: 1rem; }
+.public-v3 .v3-game-card--team .v3-game-motif span:nth-child(2) { inset-inline-end: 4.5rem; block-size: 5rem; }
+.public-v3 .v3-game-card--team .v3-game-motif span:nth-child(3) { inset-inline-end: 8rem; block-size: 6.5rem; }
+/* Playful modular forms, with no avatar or proprietary tilted-square mark. */
+.public-v3 .v3-game-card--modules { --game-scene: var(--page-bg); }
+.public-v3 .v3-game-card--modules .v3-game-motif span:nth-child(1) { inline-size: 5rem; block-size: 3.5rem; inset: 1rem 1.5rem auto auto; border-radius: 1.25rem; transform: rotate(9deg); background: color-mix(in srgb,var(--foliage) 65%,var(--surface)); }
+.public-v3 .v3-game-card--modules .v3-game-motif span:nth-child(2) { inline-size: 3rem; block-size: 3rem; inset: 2.5rem 7rem auto auto; border-radius: 50%; background: var(--supporting); }
+.public-v3 .v3-game-card--modules .v3-game-motif span:nth-child(3) { inline-size: 3.5rem; block-size: 1.25rem; inset: 5.25rem 2rem auto auto; border-radius: 2rem; background: color-mix(in srgb,var(--accent) 60%,var(--surface)); }
+/* Production tracks and simple parcels, not an existing game illustration. */
+.public-v3 .v3-game-card--conveyor { --game-scene: color-mix(in srgb,var(--supporting) 25%,var(--surface)); }
+.public-v3 .v3-game-card--conveyor .v3-game-motif { background: repeating-linear-gradient(0deg,transparent 0 1.5rem,color-mix(in srgb,var(--text) 7%,transparent) 1.5rem calc(1.5rem + 1px)); }
+.public-v3 .v3-game-card--conveyor .v3-game-motif::after { content: ''; position: absolute; inset: 5rem 1.5rem auto auto; inline-size: 10rem; block-size: 1.25rem; border-block: 2px solid var(--foliage); background: radial-gradient(circle,var(--foliage) 3px,transparent 4px) 0 center/1.25rem 1rem repeat-x; }
+.public-v3 .v3-game-card--conveyor .v3-game-motif span { inline-size: 2.5rem; block-size: 2rem; inset-block-start: 2.75rem; border: 2px solid var(--foliage); }
+.public-v3 .v3-game-card--conveyor .v3-game-motif span:nth-child(1) { inset-inline-end: 1.5rem; }
+.public-v3 .v3-game-card--conveyor .v3-game-motif span:nth-child(2) { inset-inline-end: 4.5rem; }
+.public-v3 .v3-game-card--conveyor .v3-game-motif span:nth-child(3) { inset-inline-end: 7.5rem; }
+.public-v3 .v3-games-directory-heading { display: grid; grid-template-columns: 1fr 1fr; align-items: end; gap: 2rem; margin-block-end: 1.5rem; }
+.public-v3 .v3-games-directory-heading h2 { font-size: 1.75rem; line-height: 1.2; }
+.public-v3 .v3-games-directory-heading p { line-height: 1.7; color: var(--text-muted); font-size: .9375rem; }
+.public-v3 .v3-games-closing { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; padding-block: 2rem 0; margin-block-start: 2rem; border-block-start: 1px solid var(--border); }
+.public-v3 .v3-games-closing > p { flex: 1 1 15rem; font-size: 1.25rem; font-weight: 750; }
+.public-v3 .v3-games-preview { padding-block: 2.5rem 1rem; }
+.public-v3 .v3-games-preview-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-block-end: 1.25rem; }
+.public-v3 .v3-games-preview-heading h2 { font-size: clamp(1.75rem,3vw,2.5rem); margin-block: .3rem; letter-spacing: -.04em; line-height: 1.2; }
+.public-v3 .v3-games-preview-heading p { line-height: 1.6; }
+.public-v3 .v3-game-card--compact .v3-game-face { min-block-size: 8rem; padding: 1rem; }
+.public-v3 .v3-game-card--compact .v3-game-face h3 { font-size: clamp(1.3rem,2vw,1.75rem); }
+.public-v3 .v3-game-card--compact .v3-game-copy { padding: .875rem 1rem; gap: .5rem; }
+.public-v3 .v3-game-card--compact .v3-game-motif { --game-motif-scale: .75; transform-origin: top right; }
+.public-v3 .v3-home-updates { grid-template-columns: minmax(0,1fr); }
+@media (hover: hover) and (pointer: fine) {
+ .public-v3 .v3-game-card:hover { transform: translateY(-4px); box-shadow: 0 .75rem 1.5rem color-mix(in srgb,var(--shadow) 10%,transparent); }
+ .public-v3 .v3-game-card:hover .v3-game-motif { transform: scale(var(--game-motif-scale,1)) translateY(-2px); }
+}
+@media (max-width: 64rem) { .public-v3 .v3-games-page .v3-games-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 47.5rem) {
+ .public-v3 .v3-games-page .v3-games-grid, .public-v3 .v3-games-directory-heading { grid-template-columns: 1fr; gap: 1rem; }
+ .public-v3 .v3-games-preview-heading { align-items: start; flex-direction: column; gap: .5rem; }
+ .public-v3 .v3-games-preview { padding-block: 2rem .5rem; }
+ .public-v3 .v3-games-preview .v3-games-grid { grid-template-columns: 1fr; gap: .75rem; }
+ .public-v3 .v3-game-card--compact .v3-game-face { min-block-size: 4.5rem; padding: .875rem; }
+ .public-v3 .v3-game-card--compact .v3-game-copy { padding: .625rem .875rem; }
+ .public-v3 .v3-game-card--compact .v3-game-face h3 { font-size: 1.5rem; }
+ .public-v3 .v3-game-card--compact .v3-game-motif { --game-motif-scale: .55; }
+}
+@media (max-width: 25rem) {
+ .public-v3 .v3-game-face h3 { font-size: 1.65rem; }
+ .public-v3 .v3-games-preview { padding-block: 2rem .5rem; }
+ .public-v3 .v3-games-preview-heading h2 { font-size: 1.5rem; }
+ .public-v3 .v3-game-card--compact .v3-game-face h3 { font-size: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .public-v3 .v3-game-card, .public-v3 .v3-game-motif { transition: none; }
+ .public-v3 .v3-game-card:hover { transform: none; }
+ .public-v3 .v3-game-card:hover .v3-game-motif { transform: scale(var(--game-motif-scale,1)); }
+}

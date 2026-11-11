@@ -3,6 +3,12 @@ import {readFile,readdir} from 'node:fs/promises';
 import {beginDiscordLogin,finishDiscordLogin} from '../../app/lib/staff-auth.server.ts';
 
 export async function verifyStudioBuild(build,db){
+ for (const [name,path] of [['servers','servers'],['servers-create','servers/create'],['games','games']]) {
+  const route=build.routes['routes/'+name];assert.ok(route,`Missing public server route ${name}`);
+  assert.equal(route.path,path);assert.equal(typeof route.module.default,'function');
+  assert.equal(route.module.loader,undefined,'Code-configured server routes need no private-data loader');
+ }
+
  const origin='https://staff.example.test',env={CONTENT_DB:db,CONTROL_ORIGIN:origin,DISCORD_CLIENT_ID:'100000000000000099',DISCORD_CLIENT_SECRET:'fictional-client-secret',AUTH_CSRF_SECRET:'fictional-csrf-secret-32-characters-long',INITIAL_OWNER_DISCORD_ID:'100000000000000001'},context={get:()=>env};
  const route=name=>build.routes['routes/'+name].module;
  for(const name of ['login','account','control','studio-posts','studio-new','studio-post','studio-library','studio-collection'])assert.equal(new Headers(route(name).headers()).get('Referrer-Policy'),'same-origin');

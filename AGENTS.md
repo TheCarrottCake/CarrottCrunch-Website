@@ -4,7 +4,7 @@ These rules apply to work in this repository. Read the current code and `git sta
 
 ## Identity and design
 
-- Spell the community brand **CarrottCrunch** (double **r** in "Carrott"). **TheCarrottCake** is the owner's separate personal creator/admin identity; never substitute it for the community brand.
+- Spell the community brand **CarrottCrunch** (two **t** characters in "Carrott"). **TheCarrottCake** is the owner's separate personal creator/admin identity; never substitute it for the community brand.
 - Use the **official bitten-C CarrottCrunch SVG**, located at `website/public/branding/carrottcrunch-icon.svg`, and its related favicon assets. Do not reintroduce placeholder logos or arbitrarily redraw the mark. Keep SVG paths editable and preserve their proportions.
 - Maintain the approved **Apricot Glow** palette through reusable semantic CSS variables:
   - Page background: `#FFE8D2`
@@ -19,6 +19,10 @@ These rules apply to work in this repository. Read the current code and `git sta
 - Apply Leaf Sage to the logo's leaves and sparingly to intentional nature-themed accents across the public site and Crunch Control. Orange remains the primary call-to-action colour. Do not turn the entire site green; check contrast at small icon and text sizes. Supporting orange and muted colours must not become unreadable small text.
 - Keep the **public website, Discord login, and member pages light**. Preserve the **deliberate darker treatment of Crunch Control**, including its existing mixed dark/light surfaces. Do not globally invert or flatten either design.
 - Aim for premium, modern gaming design with cozy-fantasy warmth and restrained playful details. Use responsive, accessible, typed React components; support keyboard navigation, focus visibility, semantic landmarks, labels, reduced motion, and accessible modal/menu focus handling.
+
+## Current checkpoint
+
+Content Studio V2 and Public V3 Phases 1-5B are implemented and committed. Phase 5A is `84c62cd`; Phase 5B is `898cd5a`. Phases 6A, 6A.1 and 6B are content/structure approved for the combined local checkpoint; public visual presentation is not finalized. Defer the coordinated design pass until content/functionality work is complete. See [living project status](website/docs/project-status.md) for verification and remaining work. Historical handoffs retain their original implementation-time statements.
 
 ## Application and existing features
 
@@ -39,7 +43,7 @@ These rules apply to work in this repository. Read the current code and `git sta
 
 ## Data, security, and deployments
 
-- Treat local D1/R2 state and existing data as valuable. Current local migrations include `0007` and `0008`; use **additive, reviewed migrations** for new changes. Do not reset, overwrite, reseed, or delete databases or media without explicit authorization.
+- Treat local D1/R2 state and existing data as valuable. The latest schema migration is `0013_about_memories.sql`, applied successfully to persistent local D1 on October 27, 2026 (America/Toronto). Confirm the ledger read-only before new work; use **additive, reviewed migrations** only when authorized. Maintenance does not authorize migrations or reseeding. Do not reset, overwrite, reseed, or delete databases or media without explicit authorization.
 - Media Library assets are private by default and shared by all Content Studio features. Upload metadata is optional. Public delivery requires a current authorized live release and exact media reference, never an approval queue. Creator credits appear by default only in Community Gallery; mandatory third-party attribution and licence restrictions must still be respected everywhere. Preserve restricted Markdown rendering and safe link handling; do not inject unsanitized HTML.
 - Keep secrets and local state out of Git, especially `.dev.vars*`, `.wrangler/`, `node_modules/`, credentials, tokens, and environment-specific private files. Do not print secrets in logs or reports.
 - **No automatic commits, pushes, merges, production deployments, remote D1 migrations, R2 changes, or Cron activation.** Obtain explicit approval before any remote/production change. Local implementation and local-only verification are allowed when requested.

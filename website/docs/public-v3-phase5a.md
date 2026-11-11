@@ -1,5 +1,7 @@
 # Public V3 Phase 5A handoff
 
+> Current status - November 10, 2026: Phase 5A was committed as `84c62cd`; Phase 5B is also implemented and committed as `898cd5a`. The uncommitted/unimplemented statements below describe the original handoff, not current status. Gallery and homepage retain approved cropped, full-bleed images; Staff Voices remains hidden until genuine consented contributions are supplied. See [project status](project-status.md).
+
 Implemented locally on `feature/cinematic-redesign-v3`. Changes remain
 uncommitted. A source-only checkpoint and artwork hashes are retained under
 ignored `.wrangler/checkpoints/v3-phase5a-before/`. `AGENTS.md.backup` is untouched.

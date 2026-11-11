@@ -1,3 +1,44 @@
+# CarrottCrunch development
+
+Current source: `feature/cinematic-redesign-v3`, Phase 5B checkpoint `898cd5a`.
+Content Studio V2 and Public V3 Phases 1-5B are implemented and committed.
+Read [living project status](docs/project-status.md) and the
+[November maintenance audit](docs/maintenance-2026-11.md) before continuing.
+
+The official bitten-C logo and TCC artwork are approved assets. Homepage and
+gallery use cropped, full-bleed presentation. About Memories is implemented;
+Staff Voices remains hidden pending genuine consented content.
+
+Run commands from `website/`. On Windows use `npm.cmd` if execution policy blocks
+`npm.ps1`. Existing local D1/R2 and ignored environment configuration must be
+preserved. Latest migration: `0013_about_memories.sql`, applied locally October
+27, 2026 (Toronto time). Do not migrate, seed, reset or copy private data during
+maintenance. No remote migration, production deployment or teaser change is
+authorized.
+
+```powershell
+npm.cmd test
+npm.cmd run typecheck
+npm.cmd run build
+node --experimental-strip-types tests/control-build.mjs
+node --experimental-strip-types tests/studio-v2-worker.mjs
+node --experimental-strip-types tests/about-memories-worker.mjs
+```
+
+For existing content development in PowerShell, set
+`$env:CLOUDFLARE_ENV = 'content_dev'` then run `npm.cmd run dev`.
+The existing `dev:content` script uses POSIX assignment syntax. Keep configured
+OAuth origin/callback settings; do not print secrets or replace the environment.
+Real authenticated browser verification remains separate from fixture tests.
+
+## Historical setup and milestone records
+
+The original template and chronological notes below are retained as history.
+Claims about temporary logos, absent authentication/editors, earlier migration
+numbers, image placeholders and uncommitted phases do not describe current V3.
+Deployment and migration examples below are historical instructions and require
+separate authorization; they are never validation steps.
+
 # Welcome to React Router!
 
 A modern, production-ready template for building full-stack React applications using React Router.

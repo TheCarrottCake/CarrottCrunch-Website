@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { data, Outlet, useLocation, useNavigation } from "react-router";
 import { Footer, Header } from "../components/community";
 import "../public-v3.css";
+import "../games.css";
 
 import type { Route } from "./+types/public-layout";
 import { contentEnvironmentContext } from "../lib/cloudflare-context.server";

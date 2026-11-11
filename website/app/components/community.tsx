@@ -27,7 +27,7 @@ export function FeatureCard({ icon, name, text, tag, accent }: FeatureCardProps)
 export function Brand() {
   return <Link className="brand" to="/" aria-label="CarrottCrunch home"><CrunchMark/><span>Carrott<span className="brand-light">Crunch</span><span className="brand-dot">.</span></span></Link>;
 }
-const navigation = [["Community", "/community"], ["Servers", "/servers"], ["Gallery", "/gallery"], ["Updates", "/updates"], ["About", "/about"], ["Safety", "/safety"]];
+const navigation = [["Community", "/community"], ["Games", "/games"], ["Servers", "/servers"], ["Gallery", "/gallery"], ["Updates", "/updates"], ["About", "/about"], ["Safety", "/safety"]];
 export function Header({ account = null }: { account?: AccountView | null } = {}) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

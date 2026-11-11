@@ -1,5 +1,7 @@
 # CarrottCrunch V3 release-candidate readiness
 
+> Current status - November 10, 2026: This Phase 4 readiness record is historical. Public V3 Phases 1-5B are implemented and committed: Phase 5A `84c62cd`, Phase 5B `898cd5a`. Approved About writing and gallery presentation supersede the legacy-copy finding below; real-image quality and field performance remain manual checks. Staff Voices remains hidden pending genuine consented contributions. Migration 0013 was applied locally on October 27, 2026 (Toronto time). See [project status](project-status.md).
+
 Prepared on 2026-10-27 (America/Toronto) on
 `feature/cinematic-redesign-v3`, from the V2 baseline checkpoint `6f81509`.
 This checkpoint preserves the completed Phase 1–4 source, tests and handoffs.

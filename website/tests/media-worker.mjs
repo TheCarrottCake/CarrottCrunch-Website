@@ -1,3 +1,8 @@
+// HISTORICAL PRE-V2 HARNESS - not a current application acceptance check.
+// Retained verbatim below for legacy workflow/media investigation; it is expected
+// to fail against the V2 Worker (retired approval routes/legacy Cron state).
+// Current acceptance coverage: studio-v2-worker.mjs, control-build.mjs and
+// about-memories-worker.mjs. See ../docs/maintenance-2026-11.md.
 // Post-build HTTP integration in real workerd with isolated, non-persistent D1/R2.
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
