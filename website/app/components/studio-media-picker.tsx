@@ -1,3 +1,4 @@
+import {StudioIcon} from './studio-actions';
 import { useEffect, useId, useRef, useState } from 'react';
 export type PickerAsset = {
     id: string;
@@ -8,13 +9,16 @@ export type PickerAsset = {
     creator_name: string;
     publication_blocked?: number;required_credit?:string;source_url?:string;
 };
-export function StudioMediaPicker({ csrf, onSelect, label = 'Choose from Media Library' }: {
+export function StudioMediaPicker({ csrf, onSelect, label = 'Choose from Media Library', onSelectMany }: {
     csrf: string;
     onSelect: (asset: PickerAsset) => void;
     label?: string;
+    onSelectMany?: (assets:PickerAsset[])=>void;
 }) {
     const id = useId(), dialog = useRef<HTMLDialogElement>(null), trigger = useRef<HTMLButtonElement>(null), search = useRef<HTMLInputElement>(null), [open, setOpen] = useState(false), [q, setQ] = useState(''), [items, setItems] = useState<PickerAsset[]>([]), [offset, setOffset] = useState(0), [more, setMore] = useState(false), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
-    const load = async (page = 0) => { setBusy(true); try {
+    const [selected,setSelected]=useState<Map<string,PickerAsset>>(()=>new Map());
+    const [uploading,setUploading]=useState(false),generation=useRef(0);
+    const load = async (page = 0) => { const token=++generation.current;setBusy(true); try {
         const r = await fetch(`/control/studio-media?${new URLSearchParams({ q, offset: String(page) })}`, { credentials: 'same-origin' }), data = await r.json() as {
             items?: PickerAsset[];
             more?: boolean;
@@ -22,25 +26,29 @@ export function StudioMediaPicker({ csrf, onSelect, label = 'Choose from Media L
         };
         if (!r.ok)
             throw Error(data.message);
+        if(token!==generation.current)return;
         setItems(data.items || []);
         setMore(!!data.more);
         setOffset(page);
         setMessage('');
     }
     catch (e) {
-        setMessage(e instanceof Error ? e.message : 'Unable to load images.');
+        if(token===generation.current)setMessage(e instanceof Error ? e.message : 'Unable to load images.');
     }
     finally {
-        setBusy(false);
+        if(token===generation.current)setBusy(false);
     } };
     useEffect(() => { if (open) {
         dialog.current?.showModal();
         search.current?.focus();
+        setSelected(new Map());
         load();
     }
     else
         dialog.current?.close(); }, [open]);
-    return <><button type="button" className="button secondary" ref={trigger} aria-haspopup="dialog" onClick={() => setOpen(true)}>{label}</button><dialog className="media-picker" ref={dialog} aria-labelledby={id} onCancel={() => setOpen(false)} onClose={() => { setOpen(false); trigger.current?.focus(); }} onKeyDown={e => { if (e.key !== 'Tab')
+    useEffect(()=>{if(!open)return;const root=document.documentElement,previous=root.style.overflow;root.style.overflow='hidden';return()=>{root.style.overflow=previous;};},[open]);
+    const choose=(asset:PickerAsset)=>{if(onSelectMany){setSelected(current=>{const next=new Map(current);next.has(asset.id)?next.delete(asset.id):next.set(asset.id,asset);return next;});}else{onSelect(asset);setOpen(false);}};
+    return <><button type="button" className="button secondary studio-action" ref={trigger} aria-haspopup="dialog" onClick={() => setOpen(true)}><StudioIcon name={label.startsWith("Add")?"add":"images"}/>{label}</button><dialog className="media-picker" ref={dialog} aria-labelledby={id} onCancel={e => {if(uploading)e.preventDefault();else setOpen(false);}} onClose={() => { setOpen(false); trigger.current?.focus(); }} onKeyDown={e => { if (e.key !== 'Tab')
         return; const nodes = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select')); const first = nodes[0], last = nodes.at(-1); if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last?.focus();
@@ -52,8 +60,8 @@ export function StudioMediaPicker({ csrf, onSelect, label = 'Choose from Media L
  {open && <><h2 id={id}>Media Library</h2><div className="studio-actions"><label>Search images<input ref={search} value={q} maxLength={160} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') {
             e.preventDefault();
             load();
-        } }}/></label><button type="button" className="button secondary" onClick={() => load()}>Search</button></div><StudioUpload csrf={csrf} onUploaded={asset => { onSelect(asset); setOpen(false); }}/>
- <p role="status">{busy ? 'Loading images…' : message || (!items.length ? 'No images yet. Upload one here.' : 'Select an image to reuse it.')}</p><div className="media-picker-grid">{items.map(asset => <button key={asset.id} type="button" className="media-picker-option" disabled={!!asset.publication_blocked} onClick={() => { onSelect(asset); setOpen(false); }}><img src={`/control/media/${asset.id}/preview`} alt="" width={asset.width} height={asset.height} loading="lazy"/><strong>{asset.title}</strong>{!!asset.publication_blocked && <span>Unresolved licence restriction</span>}</button>)}</div><div className="studio-actions">{offset > 0 && <button type="button" className="button secondary" onClick={() => load(Math.max(0, offset - 24))}>Previous</button>}{more && <button type="button" className="button secondary" onClick={() => load(offset + 24)}>More images</button>}<button type="button" className="button secondary" onClick={() => setOpen(false)}>Cancel</button></div></>}
+        } }}/></label><button type="button" className="button secondary" onClick={() => load()}>Search</button></div><StudioUpload csrf={csrf} onBusy={setUploading} multiple={!!onSelectMany} onUploaded={asset => {if(onSelectMany){setSelected(current=>new Map(current).set(asset.id,asset));}else{onSelect(asset);setOpen(false);}}}/>
+ <p role="status">{busy ? 'Loading images…' : message || (!items.length ? 'No images yet. Upload one here.' : 'Select an image to reuse it.')}</p><div className="media-picker-grid">{items.map(asset => <button key={asset.id} type="button" className="media-picker-option" disabled={!!asset.publication_blocked} aria-pressed={onSelectMany?selected.has(asset.id):undefined} onClick={() => choose(asset)}><img src={`/control/media/${asset.id}/preview`} alt="" width={asset.width} height={asset.height} loading="lazy"/><strong>{asset.title || 'Untitled image'}</strong>{onSelectMany&&selected.has(asset.id)&&<span>Selected</span>}{!!asset.publication_blocked && <span>Unresolved licence restriction</span>}</button>)}</div><div className="studio-actions">{offset > 0 && <button type="button" className="button secondary" onClick={() => load(Math.max(0, offset - 24))}>Previous</button>}{more && <button type="button" className="button secondary" onClick={() => load(offset + 24)}>More images</button>}<button type="button" className="button secondary" disabled={uploading} onClick={() => setOpen(false)}>Cancel</button>{onSelectMany&&<button type="button" className="button primary" disabled={!selected.size||busy||uploading} onClick={()=>{onSelectMany([...selected.values()]);setOpen(false);}}>Add selected ({selected.size})</button>}</div></>}
  </dialog></>;
 }
 export function StudioUpload({ csrf, onUploaded, multiple = false, onBusy, label = 'Upload Image' }: {

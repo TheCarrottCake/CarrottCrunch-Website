@@ -18,6 +18,10 @@ export default function Servers() {
       {servers.map(server => <ServerCard key={server.id} server={server}/>)}
       {!servers.length && <p className="v3-server-empty">No servers are published here yet. You can still find the community on Discord.</p>}
     </div>
+    <section className="v3-server-history" aria-labelledby="server-history-title">
+      <div><p className="v3-server-kicker">From earlier worlds</p><h2 id="server-history-title">A glimpse of our server history.</h2><p>A look back at an earlier Minecraft world, separate from the Create server we share today.</p></div>
+      <figure><div className="v3-server-history-image"><img src="/images/historical-minecraft/historical-tree-settlement-800.jpg" srcSet="/images/historical-minecraft/historical-tree-settlement-800.jpg 800w, /images/historical-minecraft/historical-tree-settlement-1600.jpg 1600w" sizes="(max-width: 760px) calc(100vw - 2.5rem), (max-width: 1440px) 60vw, 800px" width={1600} height={900} loading="lazy" decoding="async" alt="Large tree builds and elevated wooden structures in a misty Minecraft landscape at dusk."/></div><figcaption>Historical image supplied by the owner; not the current Create server. Date, server name and builder are unconfirmed.</figcaption></figure>
+    </section>
     <section className="v3-server-hub-note" aria-labelledby="hub-note-title">
       <span className="v3-server-cog" aria-hidden="true">&#9881;</span>
       <div><p className="v3-server-kicker">The games change. The company stays.</p><h2 id="hub-note-title">Find your next shared adventure.</h2>

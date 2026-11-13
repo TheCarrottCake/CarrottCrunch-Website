@@ -1,7 +1,11 @@
 # CarrottCrunch development
 
-Current source: `feature/cinematic-redesign-v3`, Phase 5B checkpoint `898cd5a`.
-Content Studio V2 and Public V3 Phases 1-5B are implemented and committed.
+Current source: `feature/cinematic-redesign-v3`. Phase 6 checkpoint: `f556f0c`.
+The [November development checkpoint](docs/development-checkpoint-2026-11.md)
+includes Phase 7A, schema-gated proposed Phase 7B, historical image privacy,
+About Memories collections and Content Studio V3 shared editors/dialog refinements.
+Proposed migration 0014 remains outside active migrations and is not applied.
+The final coordinated site-wide design pass remains deferred.
 Read [living project status](docs/project-status.md) and the
 [November maintenance audit](docs/maintenance-2026-11.md) before continuing.
 

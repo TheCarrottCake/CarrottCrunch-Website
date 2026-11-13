@@ -1,3 +1,4 @@
+import type {MemorySlot, MemoryPhoto} from './about-memories';
 export type StudioKind = 'announcement' | 'event' | 'homepage' | 'banners' | 'gallery' | 'about-memories';
 export type StudioItem = {
     id: string;
@@ -27,7 +28,8 @@ export type StudioSnapshot = {
         time: string;
         occurrence: string;
     };
-    memories?: Partial<Record<'opening' | 'history', {assetId: string; alt: string}>>;
+    photos?: MemoryPhoto[];
+    memories?: Partial<Record<MemorySlot, {assetId: string; alt: string}>>;
     items?: StudioItem[];
     media?: {
         placement: string;

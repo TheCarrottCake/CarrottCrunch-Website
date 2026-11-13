@@ -115,6 +115,7 @@ export function CommunityHero({slides}: {slides: readonly CommunityHeroSlide[]})
         </div>;
       })}
     </div>
+    <FullImageDialog image={shown} onOpenChange={setViewerOpen}/>
     <CrunchMark className="v3-hero-emblem"/>
     <div className="v3-hero-shade" aria-hidden="true"/>
     <div className="v3-hero-fade" aria-hidden="true"/>
@@ -151,7 +152,6 @@ export function CommunityHero({slides}: {slides: readonly CommunityHeroSlide[]})
             aria-label={reduced ? 'Automatic slideshow disabled for reduced motion' : paused ? 'Resume slideshow' : 'Pause slideshow'}
             onClick={() => setPaused(!paused)}>{paused || reduced ? '▶' : 'Ⅱ'}</button>
         </div>}
-        <FullImageDialog image={shown} onOpenChange={setViewerOpen}/>
       </div>}
     </div>
     <p className="sr-only" role="status" aria-live={manual ? 'polite' : 'off'} aria-atomic="true">

@@ -1,0 +1,28 @@
+[
+  {
+    "file": "/images/historical-minecraft/historical-tree-settlement-1600.jpg",
+    "width": 1600,
+    "height": 900,
+    "bytes": 99275,
+    "sha256": "08495cf613d4d868ca93a551297738cae907ea4d09785ca3ba5e81dd7a430f0b",
+    "source_filename": "New Icon.png",
+    "source_sha256": "e697e2d00abb77f2c598a2d34b4abf19a7d5e076f6fe09f53676e9576306c3de",
+    "basis": "Owner supplied this historical archive and requested source-level website integration; no separate photographer/builder identity or licence certification is inferred.",
+    "modifications": "JPEG quality 88, high-quality bicubic downsize, original 16:9 ratio retained, no exposure changes, no upscaling, source metadata omitted.",
+    "attribution": "Creator/builder unknown; no name invented. Public caption identifies owner-supplied historical collection and unconfirmed date/server/builder.",
+    "placement": "Servers Hub historical context only; not the present Create server."
+  },
+  {
+    "file": "/images/historical-minecraft/historical-tree-settlement-800.jpg",
+    "width": 800,
+    "height": 450,
+    "bytes": 31830,
+    "sha256": "b6736d9f2903b697902aee1374800044f76bd30b7f2f5050911e3fbfc5f06cef",
+    "source_filename": "New Icon.png",
+    "source_sha256": "e697e2d00abb77f2c598a2d34b4abf19a7d5e076f6fe09f53676e9576306c3de",
+    "basis": "Owner supplied this historical archive and requested source-level website integration; no separate photographer/builder identity or licence certification is inferred.",
+    "modifications": "JPEG quality 88, high-quality bicubic downsize, original 16:9 ratio retained, no exposure changes, no upscaling, source metadata omitted.",
+    "attribution": "Creator/builder unknown; no name invented. Public caption identifies owner-supplied historical collection and unconfirmed date/server/builder.",
+    "placement": "Servers Hub historical context only; not the present Create server."
+  }
+]

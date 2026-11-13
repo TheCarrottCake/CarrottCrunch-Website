@@ -1,0 +1,9 @@
+import {data,Link} from 'react-router';
+import type {Route} from './+types/community-staff';
+import {contentEnvironmentContext} from '../lib/cloudflare-context.server';
+import {publicStaffDirectory} from '../lib/staff-profiles.server';
+import {EditorialHeader} from '../components/public-page';
+export function headers(){return {'Cache-Control':'no-store'};}
+export function meta(){return [{title:'Meet the Staff - CarrottCrunch'},{name:'description',content:'Meet the CarrottCrunch staff who have chosen to share a public profile.'}];}
+export async function loader({context}:Route.LoaderArgs){return data(await publicStaffDirectory(context.get(contentEnvironmentContext)),{headers:headers()});}
+export default function StaffDirectory({loaderData:d}:Route.ComponentProps){return <div className="v3-container v3-page staff-directory"><EditorialHeader eyebrow="Our community" title="Good company, behind the scenes." description="Meet the staff who have chosen to introduce themselves. Public profiles are optional."/><Link className="text-link" to="/community">Back to the community</Link>{!d.profiles.length?<p className="content-empty" role="status">{d.ready?'No public staff profiles have been shared yet.':'The staff directory is not available yet. Profiles will appear here after staff opt in and their consented profiles are published.'}</p>:<div className="staff-directory-grid">{d.profiles.map(p=><article className="public-card" key={p.id}>{p.portrait&&<figure><img src={p.portrait.src} alt={p.portrait.alt} width="160" height="160" loading="lazy" onError={e=>{e.currentTarget.hidden=true;}}/>{p.portrait.credit&&<figcaption>{p.portrait.credit}</figcaption>}</figure>}<h2>{p.displayName}</h2><p className="staff-directory-role">{p.role}</p>{p.biography&&<p className="profile-biography">{p.biography}</p>}</article>)}</div>}</div>;}

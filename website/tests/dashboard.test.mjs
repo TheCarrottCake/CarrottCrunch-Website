@@ -3,12 +3,14 @@ import { test } from 'node:test';
 import { dashboardTools } from '../app/lib/dashboard-tools.ts';
 
 test('dashboard tools follow the specified role hierarchy', () => {
-  assert.deepEqual(dashboardTools('Moderator').map(tool => tool.name), ['Posts & Events', 'Community Gallery', 'About Memories', 'Media Library', 'Homepage', 'Activity History']);
+  assert.deepEqual(dashboardTools('Moderator').map(tool => tool.name), ['Posts & Events', 'Community Gallery', 'About Memories', 'Media Library', 'Staff Profiles', 'Homepage', 'Activity History']);
   const admin = dashboardTools('Administrator');
-  assert.deepEqual(admin.map(tool => tool.name), ['Posts & Events', 'Community Gallery', 'About Memories', 'Media Library', 'Staff Profiles', 'Homepage', 'Activity History', 'Settings']);
-  assert.equal(dashboardTools('Owner').length, 8);
+  assert.deepEqual(admin.map(tool => tool.name), ['Posts & Events', 'Community Gallery', 'About Memories', 'Media Library', 'Staff Management', 'Staff Profiles', 'Homepage', 'Activity History', 'Settings']);
+  assert.equal(dashboardTools('Owner').length, 9);
   assert.match(dashboardTools('Owner').find(tool => tool.id === 'settings').description, /role assignments and restricted configuration/);
   assert.doesNotMatch(admin.find(tool => tool.id === 'settings').description, /role assignments|restricted configuration/);
   assert.deepEqual(dashboardTools('unknown'), []);
   for (const role of ['Moderator', 'Administrator', 'Owner']) assert.equal(dashboardTools(role).find(tool => tool.id === 'news').href, '/control/posts');
 });
+
+test('Staff Management navigation is restricted to Administrator and Owner',()=>{assert.equal(dashboardTools('Moderator').some(t=>t.id==='staff'),false);for(const role of ['Administrator','Owner'])assert.equal(dashboardTools(role).find(t=>t.id==='staff').href,'/control/staff');});

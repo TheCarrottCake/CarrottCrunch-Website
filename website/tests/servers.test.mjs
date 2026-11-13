@@ -69,3 +69,10 @@ test('reusable server card remains game-neutral and preserves image credit/fallb
  assert.match(render(ServerArtwork,'/servers',{image}),/TEST mandatory attribution/);
  assert.doesNotMatch(render(ServerArtwork,'/servers',{image:{...image,src:'/control/media/private/preview'}}),/src="\/control/);
 });
+
+test('historical context stays separate from current Create imagery with stable lazy responsive media',async()=>{
+ const Hub=(await component('app/routes/servers.tsx')).default,html=render(Hub);
+ assert.match(html,/v3-server-history/);assert.match(html,/not the current Create server/);assert.match(html,/Date, server name and builder are unconfirmed/);
+ assert.match(html,/<img[^>]*src="\/images\/historical-minecraft\/historical-tree-settlement-800.jpg"[^>]*srcSet=[^>]*width="1600" height="900" loading="lazy"/);
+ assert.doesNotMatch(html,/Server%20Photos|IMG_0505|unknown.png|New Icon.png/);
+});

@@ -1,11 +1,11 @@
-import {useEffect, useId, useRef, useState} from 'react';
+import {useEffect, useId, useRef, useState, type ReactNode} from 'react';
 import {safeContentHref} from './content-body';
 import {isPublicHeroImage, type CommunityHeroSlide} from '../lib/community-hero';
 
-type Props = {image: CommunityHeroSlide | null; onOpenChange?: (open: boolean) => void; variant?: 'hero' | 'gallery'; triggerLabel?: string};
+type Props = {image: CommunityHeroSlide | null; onOpenChange?: (open: boolean) => void; variant?: 'hero' | 'gallery'; triggerLabel?: string; children?: ReactNode; triggerClassName?: string};
 
 /** A full presentation of the same guarded derivative, never an original URL. */
-export function FullImageDialog({image, onOpenChange, variant = 'hero', triggerLabel}: Props) {
+export function FullImageDialog({image, onOpenChange, variant = 'hero', triggerLabel, children, triggerClassName}: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -38,12 +38,12 @@ export function FullImageDialog({image, onOpenChange, variant = 'hero', triggerL
   const close = () => dialog.current?.close();
   const source = shown?.creditSource ? safeContentHref(shown.creditSource) : null;
   return <>
-    <button ref={trigger} type="button" className={variant === 'hero' ? 'button v3-hero-view' : 'button secondary v3-gallery-view'} aria-haspopup="dialog" aria-label={triggerLabel}
+    <button ref={trigger} type="button" className={triggerClassName || (variant === 'hero' ? 'v3-image-activation v3-hero-image-activation' : 'v3-image-activation')} aria-haspopup="dialog" aria-label={triggerLabel || `View full image: ${image?.title || image?.alt || 'Community image'}`}
       disabled={!image || !isPublicHeroImage(image.image)}
       onClick={() => {
         if (!image || !isPublicHeroImage(image.image)) return;
         setFailed(false); setLoaded(false); setShown({...image}); onOpenChange?.(true);
-      }}>View full image</button>
+      }}>{children || <span className="sr-only">{triggerLabel || `View full image: ${image?.title || image?.alt || 'Community image'}`}</span>}</button>
     <dialog ref={dialog} className="v3-full-image-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`}
       onClose={() => {
         setShown(null); onOpenChange?.(false);

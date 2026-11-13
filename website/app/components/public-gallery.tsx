@@ -23,8 +23,8 @@ function GalleryTile({image, title, description, alt, featured, link, linkText}:
   return <article className="v3-gallery-tile" data-featured={!!featured}>
     <figure>
       <div className="v3-gallery-tile-image">
-        {available && !failed ? <img src={available.src} alt={alt || available.alt || label} width={available.width} height={available.height}
-          loading="lazy" decoding="async" onError={() => setFailed(true)}/> : <div className="v3-gallery-missing"><p>Image unavailable.</p>
+        {available && !failed ? <FullImageDialog image={viewerImage} variant="gallery" triggerLabel={`View full image: ${label}`}><img src={available.src} alt={alt || available.alt || label} width={available.width} height={available.height}
+          loading="lazy" decoding="async" onError={() => setFailed(true)}/></FullImageDialog> : <div className="v3-gallery-missing"><p>Image unavailable.</p>
             {available && <button type="button" className="button secondary" onClick={() => setFailed(false)}>Retry image<span className="sr-only">: {label}</span></button>}
           </div>}
       </div>
@@ -34,10 +34,7 @@ function GalleryTile({image, title, description, alt, featured, link, linkText}:
       {featured && <p className="v3-gallery-featured-label">Featured creation</p>}
       <h3>{label}</h3>
       {description && <p>{description}</p>}
-      <div className="v3-gallery-tile-actions">
-        {viewerImage && <FullImageDialog image={viewerImage} variant="gallery" triggerLabel={`View full image: ${label}`}/>}
-        {href && <a className="text-link" href={href}>{linkText || 'Learn more'}<span className="sr-only">: {label}</span></a>}
-      </div>
+      {href && <div className="v3-gallery-tile-actions"><a className="text-link" href={href}>{linkText || 'Learn more'}<span className="sr-only">: {label}</span></a></div>}
     </div>
   </article>;
 }

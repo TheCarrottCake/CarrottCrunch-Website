@@ -1,6 +1,6 @@
 import {contentEnvironmentContext} from '../lib/cloudflare-context.server';
 import {publicAboutMemories} from '../lib/about-memories.server';
-import {AboutMemory} from '../components/about-memory';
+import {AboutMemory,AboutMemoryCollage} from '../components/about-memory';
 import type {ReactNode} from 'react';
 import {Link} from 'react-router';
 import {CrunchMark} from '../components/community';
@@ -40,11 +40,7 @@ export default function Page({loaderData}: Route.ComponentProps) {
         <p className="v3-about-lead">Good games bring us together. <strong>Great people make us stay.</strong></p>
         <p className="v3-about-introduction">{page.description}</p>
       </div>
-      <div className="v3-about-scrapbook">
-        <span className="v3-about-spark" aria-hidden="true">✳</span>
-        <AboutMemory image={loaderData?.memories?.opening} label="Community memories" className="v3-memory-slot--opening"/>
-        <p className="v3-memory-caption">Room for real memories.</p>
-      </div>
+      <AboutMemoryCollage images={loaderData?.memories || {}}/>
     </header>
 
     <section className="v3-about-history" id="about-history" aria-labelledby="about-section-0">
@@ -58,7 +54,7 @@ export default function Page({loaderData}: Route.ComponentProps) {
       <div className="v3-about-history-grid">
         <div><p className="v3-about-history-lead">{historyParagraphs[0]}</p><Paragraphs items={historyParagraphs.slice(1, 3)}/></div>
         <div className="v3-about-history-later"><Paragraphs items={historyParagraphs.slice(3, -1)}/><p className="v3-about-history-ending">{historyParagraphs.at(-1)}</p>
-          <AboutMemory image={loaderData?.memories?.history} label="Shared worlds &amp; moments" className="v3-memory-slot--history"/>
+          {Object.entries(loaderData?.memories||{}).filter(([id,image])=>image.placement==='story'||!image.placement&&id==='history').map(([id,image])=><AboutMemory key={id} image={image} label={image.caption||'Shared worlds & moments'} className="v3-memory-slot--history"/>)}
         </div>
       </div>
     </section>

@@ -1,0 +1,15 @@
+[
+  {
+    "filename": "IMG_0505.png",
+    "sha256": "a81e6bd0906d5fa7e72674fb4a1fe9f3a325107c594e1a69cfbdec9c07be9a8b",
+    "reason": "Owner confirmed this is Joel and requested removal from the website collection.",
+    "excluded_on": "2026-11-11",
+    "exclude_from": [
+      "website assets",
+      "contact sheets",
+      "Content Studio import plans",
+      "asset recommendations"
+    ],
+    "disposition": "Original moved to verified private backup outside the website repository; no public/source image retained."
+  }
+]

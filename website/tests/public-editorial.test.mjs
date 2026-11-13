@@ -36,7 +36,7 @@ test('Informational pages retain all published copy and clearly distinguish unfi
   }
 });
 
-test('About preserves the approved history and founder message with honest memory placeholders',async()=>{
+test('About preserves the approved history and founder message without empty memory positions',async()=>{
   const About=(await component('app/routes/about.tsx')).default;
   const {publicPages}=await component('app/content/public-pages.ts');
   const html=render(About,{}),page=publicPages.about;
@@ -50,7 +50,7 @@ test('About preserves the approved history and founder message with honest memor
   assert.match(html,/<strong>Come for the games\. Stay for the people\.<\/strong>/);assert.match(html,/<strong>See you around!<\/strong>/);
   assert.match(html,/href="\/join"/);assert.match(html,/href="\/servers"/);
   assert.doesNotMatch(html,/NEEDS EDITORIAL REVIEW|Brand artwork|not been published/i);
-  assert.equal((html.match(/Awaiting a real historical image\./g)||[]).length,2);
+  assert.equal((html.match(/Awaiting a real historical image\./g)||[]).length,0);
   assert.match(html,/not a complete timeline/);
   for(const name of ["The Boop&#x27;s Discord",'CarrottCrazeHQ','The Rooted Realm','CarrottCrunch'])assert.ok(html.includes(name));
   assert.match(html,/src="\/branding\/TCC_Logo_Icon_Only\.svg"/);
@@ -106,4 +106,15 @@ test('Staff voices are empty until supplied and consented; public projection exc
   const approved=projectStaffVoices([{...named,consent:{message:true,name:true,role:true,portrait:true}}]);const html=render(StaffVoices,{contributions:approved});
   assert.match(html,/<blockquote>/);assert.match(html,/TEST role/);assert.match(html,/TEST portrait credit/);assert.match(html,/href="https:\/\/example.test\/licence"/);
   assert.doesNotMatch(JSON.stringify(projectStaffVoices([{...named,portrait:{...portrait,src:'https://cdn.discordapp.com/private-avatar'},consent:{message:true,name:true,portrait:true}}])),/cdn.discordapp.com/);
+});
+
+test('About uses six managed images as five-image collage plus story, with image activation and no visible viewer CTA',async()=>{
+ const About=(await component('app/routes/about.tsx')).default;
+ const slots=['opening','history','collage1','collage2','collage3','collage4'];
+ const memories=Object.fromEntries(slots.map((slot,index)=>[slot,{assetId:`${index+1}`.repeat(8)+'-1111-4111-8111-111111111111',src:`/media/studio/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/${String(index+1).repeat(8)}-1111-4111-8111-111111111111/detail`,width:1280,height:720,alt:'TEST historical build '+slot,requiredCredit:'TEST required credit',source:'',creator:''}]));
+ const html=render(About,{loaderData:{memories,staffVoices:[]}});
+ assert.equal((html.match(/class="v3-memory-slot /g)||[]).length,6);assert.match(html,/data-count="5"/);
+ assert.equal((html.match(/aria-haspopup="dialog"/g)||[]).length,6);assert.doesNotMatch(html,/>View full image<|Awaiting a real|Room for real memories/);
+ assert.equal((html.match(/TEST required credit/g)||[]).length,6);
+ const fewer=render(About,{loaderData:{memories:{collage2:memories.collage2},staffVoices:[]}});assert.match(fewer,/data-count="1"/);assert.equal((fewer.match(/class="v3-memory-slot /g)||[]).length,1);
 });

@@ -13,7 +13,11 @@ export async function studioEditorLoader(request: Request, env: MediaEnvironment
         const snapshot: StudioSnapshot = saved?.snapshot || (kind === 'about-memories'
             ? {title:'About memories',body_text:'',memories:{}}
             : { title: ['homepage', 'banners', 'gallery'].includes(kind) ? ({ homepage: 'Homepage showcase', banners: 'Homepage banners', gallery: 'Community Creations' }[kind as 'homepage'] || 'Community Creations') : '', body_text: '', coverId: '', items: ['homepage', 'banners', 'gallery'].includes(kind) ? [] : undefined });
-        return data({ ...await studioIdentity(session, env), notice:new URL(request.url).searchParams.get('done')==='1'?'Changes saved.':'', document: saved?.document || null, snapshot, kind: saved?.document.kind || kind, images: saved ? await studioImages(db, saved.document.id, saved.document.revision) : {}, history: saved ? await studioHistory(db, saved.document.id) : [] }, { headers: studioHeaders });
+        const releases=saved?await db.prepare('SELECT id,revision,due_at FROM studio_releases WHERE document_id=? AND id IN(?,?)').bind(saved.document.id,saved.document.live_release_id,saved.document.pending_release_id).all<{id:string;revision:number;due_at:number}>():null;
+        const live=releases?.results.find(r=>r.id===saved?.document.live_release_id),pending=releases?.results.find(r=>r.id===saved?.document.pending_release_id);
+        const publication={liveRevision:live?.revision??null,pendingRevision:pending?.revision??null,pendingDueAt:pending?.due_at??null};
+        const notice=new URL(request.url).searchParams.get('done')==='1'?`Working revision ${saved?.document.revision??1} saved.${live?` Revision ${live.revision} is live.`:' Content is not currently public.'}${pending?` Revision ${pending.revision} is scheduled; the current public version is unchanged.`:''}`:'';
+        return data({ ...await studioIdentity(session, env), notice,publication, document: saved?.document || null, snapshot, kind: saved?.document.kind || kind, images: saved ? await studioImages(db, saved.document.id, saved.document.revision) : {}, history: saved ? await studioHistory(db, saved.document.id) : [] }, { headers: studioHeaders });
     }
     catch (e) {
         throw studioFailure(e);

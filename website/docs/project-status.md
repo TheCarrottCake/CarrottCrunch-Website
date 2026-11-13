@@ -1,6 +1,6 @@
 # CarrottCrunch project status
 
-Updated November 11, 2026 (America/Toronto).
+Updated November 12, 2026 (America/Toronto).
 
 Phases 6A (Servers/Create), 6A.1 (Games) and 6B (Safety) are **content and
 functionality/structure approved** for the combined local checkpoint. Public
@@ -14,6 +14,47 @@ work is complete. It must address shared visual identity, section-to-section
 flow, typography and spacing, page composition, personality/originality,
 responsive design, accessibility/motion and navigation consistency. No such
 redesign or next-phase implementation is authorized by this checkpoint.
+
+> Development checkpoint: [November 12 scope and verification](development-checkpoint-2026-11.md). Earlier handoffs retain their implementation-time uncommitted statements. Proposed 0014 remains unapplied; final site-wide design is deferred.
+
+## Phase 7A - private staff administration
+
+Implemented locally and uncommitted for review from checkpoint `f556f0c`:
+`/control/staff` gives Owner access management/history, Administrator read-only
+roster and no Moderator/member access. Reuses existing tables, access versions,
+append-only audits and session invalidation; no migration or persistent account
+change. All 156 regressions, typecheck/build and current Worker checks pass.
+See [Phase 7A handoff](phase7a-staff-administration.md).
+
+Public Staff Directory is confirmed for V1.0. [Phase 7B proposal](phase7b-staff-directory-proposal.md)
+has a tested proposed implementation with explicit opt-in/field consent and no
+public Discord IDs/account records. Proposed schema 0014 is awaiting owner approval;
+no persistent profile tables or data have been created. Staff Voices remains independent. The final
+site-wide design consistency pass stays deferred.
+
+## Phase 7B - proposed Public Staff Directory implementation
+
+Own draft/field-specific consent, Administrator/Owner publication, withdrawal,
+role/access invalidation and guarded portraits are implemented against disposable
+schema and remain uncommitted. `/community/staff` is linked from Community.
+All 165 regressions, typecheck/build, applicable built/Worker suites and five-width
+browser review pass. See [implementation and migration review](phase7b-public-staff-directory.md).
+Persistent D1 still ends at 0013 with zero new profile tables; draft SQL lives
+outside active migrations and must not be applied without owner approval. The
+real editor/directory remain schema-gated pending that approval/application.
+
+## Historical server photo review
+
+Historical collection reviewed (including 14 GIF frames). Eight unrelated originals
+remain unchanged; owner-confirmed Joel portrait was removed to a verified private
+backup outside the repository and excluded from future contact sheets/recommendations.
+Remaining originals are excluded from public delivery/build and Git because the
+collection includes an unconsented real-person portrait and unreviewed artwork. One optimized historical
+tree-settlement image is added only as Servers Hub context, explicitly separate
+from the current Create server. About/Gallery imports are plans, not persistent
+content changes; existing homepage media is retained. All 168 regressions,
+typecheck/build, applicable Worker suites and five-width image checks pass.
+See [photo inventory, contact sheet and placement plan](historical-server-photo-review.md).
 
 ## Source and completed work
 
@@ -85,3 +126,64 @@ Before a source checkpoint, review the diff and intended staged paths, excluding
 `AGENTS.md.backup`, secrets, `.wrangler/`, dependencies and generated artifacts.
 The combined local commit is authorized after validation and staged-diff review.
 No push, merge or deployment is authorized.
+
+## About Memories collage and image controls â€” November 11
+
+About Memories now supports six optional managed positions: legacy `opening` and
+`history`, plus `collage1`â€“`collage4`. The opening collage hides unused/failed
+images and the smaller story placement remains independent. Visible public
+full-image CTAs were removed from homepage, About and Gallery; images retain
+keyboard-accessible activation of the existing viewer. Approved About writing,
+founder icon, slideshow controls and ongoing Phase 7A/7B work are preserved.
+No migration or persistent content/media write was required; 0014 remains pending.
+Historical candidates still require creator-rights/attribution review before any
+normal Content Studio import/publication. See [implementation and private review
+screenshots](about-memories-collage.md). Final site-wide design remains deferred.
+
+## Content Studio V3 visual collections - November 11
+
+About Memories now uses an ordered visual photo collection (up to 100 references,
+24 thumbnails initially) instead of six expanded slots. Legacy saved/live slot
+revisions remain compatible and are converted only on explicit editing/saving.
+Shared accessible item dialogs and compact icons also manage homepage/Gallery
+entries and post/event covers. Existing collection-level publication, scheduling,
+history, concurrency, rights enforcement and private media delivery remain intact.
+Media Library metadata and inline post attachments have a focused follow-up plan.
+See [V3 implementation, rollout status and private screenshots](content-studio-v3.md).
+No migrations or persistent D1/R2 changes; 0014 remains pending. The earlier
+six-slot collage handoff below is implementation history, superseded by this format.
+
+## Content Studio - direct updates and scheduled updates
+
+Live content now exposes Update, Schedule Update and Save Draft in the shared
+editor toolbar; Unpublish is under More. Update includes unsaved form edits using
+the existing atomic save/publish service. Protected release metadata identifies
+working, live and scheduled revisions. Current content stays live while editing,
+previewing, privately saving or waiting for Cron. Later draft saves retain V2's
+schedule-cancellation safeguard, now explicit in the UI. See [implementation,
+verification and screenshots](studio-update-scheduling.md). No migrations or
+persistent data changes; existing uncommitted work is retained.
+
+## Shared editors rollout
+
+Homepage/Gallery retain their approved visual managers, with explicit slide
+positions and accurate creator/required-credit previews. Media Library now uses
+the same accessible V3 dialog for global asset metadata, with explicit scope,
+unsaved protection, versioned save errors, pending locks and guarded usage/trash
+controls. Shared publication actions and schedule-cancellation safeguards remain.
+See [rollout, changed files and before/after screenshots](studio-shared-editors-rollout.md).
+No schema or persistent-data changes; 0014 remains pending. Inline post attachment
+editing and independent schedules remain separate future work.
+
+## Shared dialog usability - November 12
+
+The shared Studio dialog now keeps its header and action footer visible around
+one scrolling content region. Media Library optional metadata uses accessible
+disclosures with error reveal and persistent rights warnings. Narrow editors
+use near-full viewport dimensions, safe-area padding and visual-viewport sizing.
+All four editors passed authenticated isolated five-width browser checks;
+nested picker Escape is scoped to the picker. Full regressions (173), typecheck,
+build and current built-route/Worker/Cron checks pass. See the
+[handoff and before/after screenshots](studio-dialog-usability.md). Physical
+keyboards and screen readers remain manual checks. No persistent data changes,
+migrations, commits or production changes; proposed 0014 remains unapplied.

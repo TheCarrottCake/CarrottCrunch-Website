@@ -386,22 +386,6 @@
 .public-v3 .v3-hero-control-panel .v3-hero-control:disabled { color: var(--on-featured); border-color: var(--v3-overlay-border); opacity: .55; }
 .public-v3 .v3-hero-count { font-size: .8125rem; white-space: nowrap; }
 .public-v3 .v3-hero[data-has-image="true"] .v3-hero-count { padding: .25rem; background: color-mix(in srgb, var(--featured) 88%, transparent); border-radius: .25rem; }
-.public-v3 .v3-hero-view {
-  min-block-size: 2.75rem;
-  padding: .65rem .85rem;
-  color: var(--v3-hero-detail);
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  text-decoration: underline;
-  text-underline-offset: .3em;
-  font-size: .75rem;
-  white-space: normal;
-}
-.public-v3 .v3-hero[data-has-image="true"] .v3-hero-view { background: color-mix(in srgb, var(--featured) 88%, transparent); border-radius: .25rem; }
-.public-v3 .v3-hero-view:focus-visible { outline-color: var(--supporting); }
-.public-v3 .v3-hero-view:disabled { color: var(--on-featured); background: var(--featured); opacity: .7; }
 
 .public-v3 .v3-full-image-dialog {
   position: fixed;
@@ -701,7 +685,6 @@
 .public-v3 .v3-memory-canvas--image { overflow: hidden; border: 0; }
 .public-v3 .v3-memory-canvas--image > img { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: cover; object-position: center; }
 .public-v3 .v3-memory-slot figcaption a { text-decoration: underline; }
-.public-v3 .v3-memory-slot .v3-gallery-view { justify-self: start; margin-block-start: .5rem; white-space: normal; }
 
 /* Seven public destinations: switch to the existing menu pattern before crowding. */
 .public-v3 .v3-site-header .nav { gap: clamp(.75rem, 1.25vw, 1.25rem); }
@@ -712,3 +695,47 @@
  .public-v3 .v3-site-header .nav a { padding: .8125rem; }
  .public-v3 .v3-site-header .nav-join { margin: .625rem 0 0; }
 }
+
+/* Public images activate the existing viewer without a separate visible CTA. */
+.public-v3 .v3-image-activation {display:block;position:relative;inline-size:100%;block-size:100%;padding:0;margin:0;border:0;border-radius:inherit;background:transparent;box-shadow:none;appearance:none;cursor:zoom-in;text-align:inherit;min-inline-size:0;}
+.public-v3 .v3-image-activation:focus-visible {outline:3px solid var(--accent);outline-offset:4px;}
+.public-v3 .v3-image-activation>img {display:block;inline-size:100%;block-size:100%;object-fit:cover;object-position:center;}
+.public-v3 .v3-gallery-tile-image>.v3-image-activation {position:absolute;inset:0;}
+.public-v3 .v3-memory-canvas--image>.v3-image-activation {position:absolute;inset:0;}
+.public-v3 .v3-hero-image-activation {position:absolute;inset:0;z-index:0;border-radius:0;}
+.public-v3 .v3-hero-image-activation:focus-visible {outline-color:var(--supporting);outline-offset:-6px;}
+.public-v3 .v3-hero-image-activation:disabled {cursor:default;}
+.public-v3 .v3-hero-copy,.public-v3 .v3-hero-footer {position:relative;z-index:1;pointer-events:none;}
+.public-v3 .v3-hero-copy :is(a,button),.public-v3 .v3-hero-footer :is(a,button,.v3-hero-meta) {pointer-events:auto;}
+/* Managed opening collage: legacy opening/history slots are never reassigned. */
+.public-v3 .v3-about-opening {grid-template-columns:minmax(0,1fr);align-items:start;gap:2rem;}
+.public-v3 .v3-about-opening-copy {max-inline-size:68ch;}
+.public-v3 .v3-memory-collage {display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:stretch;gap:clamp(.9rem,2vw,1.5rem);padding:.75rem .5rem 1rem;min-inline-size:0;}
+.public-v3 .v3-memory-collage>.v3-memory-slot {grid-column:span 4;min-inline-size:0;display:flex;flex-direction:column;transform:rotate(-1deg);}
+.public-v3 .v3-memory-collage>.v3-memory-slot:nth-child(even) {transform:rotate(1.3deg);}
+.public-v3 .v3-memory-collage>.v3-memory-slot:first-child {grid-column:span 12;transform:rotate(-.6deg);}
+.public-v3 .v3-memory-collage[data-count="1"]>.v3-memory-slot {inline-size:100%;max-inline-size:48rem;}
+.public-v3 .v3-memory-collage[data-count="2"]>.v3-memory-slot:first-child {grid-column:span 7;}
+.public-v3 .v3-memory-collage[data-count="2"]>.v3-memory-slot:last-child {grid-column:span 5;align-self:center;}
+.public-v3 .v3-memory-collage[data-count="3"]>.v3-memory-slot:first-child {grid-column:span 7;grid-row:span 2;}
+.public-v3 .v3-memory-collage[data-count="3"]>.v3-memory-slot:not(:first-child) {grid-column:span 5;}
+.public-v3 .v3-memory-collage[data-count="5"]>.v3-memory-slot:first-child {grid-column:span 6;grid-row:span 2;}
+.public-v3 .v3-memory-collage[data-count="5"]>.v3-memory-slot:not(:first-child) {grid-column:span 3;}
+.public-v3 .v3-memory-collage:is([data-count="3"],[data-count="5"])>.v3-memory-slot:first-child>.v3-memory-canvas {flex:1;aspect-ratio:auto;min-block-size:0;}
+.public-v3 .v3-memory-collage[data-count="4"]>.v3-memory-slot:first-child>.v3-memory-canvas {aspect-ratio:2/1;}
+.public-v3 .v3-memory-slot[data-small="true"] {align-self:start;}
+.public-v3 .v3-memory-slot[data-small="true"]>.v3-memory-canvas {aspect-ratio:var(--memory-small-ratio);flex:none;}
+.public-v3 .v3-memory-slot--history {margin-block-start:1.5rem;}
+@media(max-width:760px) {
+ .public-v3 .v3-memory-collage {grid-template-columns:repeat(2,minmax(0,1fr));padding-inline:0;gap:1rem;}
+ .public-v3 .v3-memory-collage>.v3-memory-slot,.public-v3 .v3-memory-collage[data-count]>.v3-memory-slot:not(:first-child) {grid-column:span 1;grid-row:auto;transform:none;align-self:start;}
+ .public-v3 .v3-memory-collage[data-count]>.v3-memory-slot:first-child {grid-column:1/-1;grid-row:auto;transform:none;}
+ .public-v3 .v3-memory-collage[data-count]>.v3-memory-slot:first-child>.v3-memory-canvas {aspect-ratio:3/2;flex:none;}
+ .public-v3 .v3-memory-collage[data-count="2"]>.v3-memory-slot:last-child {grid-column:1/-1;inline-size:80%;justify-self:center;}
+ .public-v3 .v3-memory-collage[data-count="4"]>.v3-memory-slot:last-child {grid-column:1/-1;}
+ .public-v3 .v3-memory-collage>.v3-memory-slot {padding:.45rem;}
+ .public-v3 .v3-memory-collage figcaption {font-size:.75rem;padding:.5rem .1rem .1rem;}
+ .public-v3 .v3-memory-slot--history {transform:none;}
+}
+
+.public-v3 .v3-memory-collage[data-count]>.v3-memory-slot[data-small="true"]>.v3-memory-canvas {aspect-ratio:var(--memory-small-ratio);flex:none;}

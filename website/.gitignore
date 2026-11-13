@@ -16,3 +16,6 @@ worker-configuration.d.ts
 
 !.dev.vars.example
 !.env.example
+
+# Owner originals: mixed private portraits/unreviewed artwork; preserve locally.
+/public/images/Server Photos/

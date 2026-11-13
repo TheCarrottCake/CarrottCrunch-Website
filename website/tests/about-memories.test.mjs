@@ -1,3 +1,4 @@
+import {memorySlots,memoryPhotos} from '../app/lib/about-memories.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,readdir} from 'node:fs/promises';
@@ -10,9 +11,12 @@ import {deliverStudioImage,studioSnapshotImages} from '../app/lib/studio-media.s
 import {validateMemoryRelease} from '../app/lib/about-memories-validation.server.ts';
 
 const blank=()=>({title:'About memories',body_text:'',memories:{}});
-test('About Memories accepts exactly two optional slots and derives its manifest',()=>{
+test('About Memories accepts six optional slots and preserves legacy pairs and derives its manifest',()=>{
  const assetId=crypto.randomUUID(),entry={assetId,alt:'A community build beside the river'};
  assert.deepEqual(normalizeSnapshot(blank(),'about-memories').media,[]);
+ assert.deepEqual(memorySlots,['opening','history','collage1','collage2','collage3','collage4']);
+ const six=Object.fromEntries(memorySlots.map(slot=>[slot,entry]));
+ assert.deepEqual(normalizeSnapshot({...blank(),memories:six},'about-memories').media.map(m=>m.placement),memorySlots.map(slot=>'memory:'+slot));
  assert.deepEqual(normalizeSnapshot({...blank(),memories:{opening:entry,history:entry},media:[{placement:'forged',assetId,alt:''}]},'about-memories').media.map(m=>m.placement),['memory:opening','memory:history']);
  for(const memories of [{other:entry},{opening:null},{opening:{...entry,src:'https://unsafe.test'}},{opening:{assetId:'private/original.png',alt:'Description'}},{opening:{assetId,alt:23}},{opening:{assetId,alt:'x'.repeat(1001)}},[]])assert.throws(()=>normalizeSnapshot({...blank(),memories},'about-memories'));
  for(const extra of [{coverId:assetId},{items:[]},{body_text:'Unapproved replacement story'},{title:'Different story'}])assert.throws(()=>normalizeSnapshot({...blank(),...extra},'about-memories'));
@@ -61,7 +65,27 @@ test('About Memories exact releases, two-slot isolation, roles, alt, rights, his
  d=(await studioGet(db,id)).document;await studioAction(env,actor,id,d.version,'unpublish');assert.deepEqual(await publicAboutMemories(db),{});
  d=(await studioGet(db,id)).document;await studioSave(env,actor,id,'about-memories',blank(),d.version,true);assert.deepEqual(await publicAboutMemories(db),{});
  d=(await studioGet(db,id)).document;await studioAction(env,actor,id,d.version,'restore',undefined,1);assert.equal((await studioGet(db,id)).snapshot.memories.opening.assetId,assets[0]);assert.deepEqual(await publicAboutMemories(db),{});
+ const six={...blank(),memories:Object.fromEntries(memorySlots.map(slot=>[slot,{assetId:assets[0],alt:'TEST historical build for '+slot}]))};
+ d=(await studioGet(db,id)).document;await studioSave(env,actor,id,'about-memories',six,d.version,true);
+ assert.deepEqual(Object.keys(await publicAboutMemories(db)),[...memorySlots]);
+ assert.deepEqual(Object.keys(await studioSnapshotImages(db,six)),memorySlots.map(slot=>'memory:'+slot));
+ d=(await studioGet(db,id)).document;await studioSave(env,actor,id,'about-memories',one,d.version);
+ assert.equal(Object.keys(await publicAboutMemories(db)).length,6,'Private legacy-pair edits cannot overwrite a published collage');
  await db.prepare('UPDATE staff_accounts SET active=0 WHERE discord_user_id=?').bind(actor.discord_user_id).run();
  d=(await studioGet(db,id)).document;await assert.rejects(studioSave(env,actor,id,'about-memories',one,d.version,true));
  assert.ok((await studioHistory(db,id)).length>=6);assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);
+});
+
+
+test('Ordered About photos preserve legacy placement intent and enforce derived references and collection bounds',()=>{
+ const assetId=crypto.randomUUID(),legacy={title:'About memories',body_text:'',memories:{opening:{assetId,alt:'Friends in a stone hall'},history:{assetId,alt:'A tree settlement beside water'}}};
+ const original=structuredClone(legacy),photos=memoryPhotos(legacy);
+ assert.deepEqual(legacy,original);assert.equal(photos[0].id,'opening');assert.equal(photos[1].placement,'story');
+ const input={title:'About memories',body_text:'',photos,media:[{placement:'forged',assetId:crypto.randomUUID(),alt:'forged'}]};
+ const normalized=normalizeSnapshot(input,'about-memories');assert.deepEqual(normalized.photos,photos);assert.deepEqual(normalized.media.map(m=>m.placement),['memory:opening','memory:history']);
+ const many=Array.from({length:100},()=>({...photos[0],id:crypto.randomUUID(),featured:false}));
+ assert.equal(normalizeSnapshot({...input,photos:many},'about-memories').media.length,100);
+ for(const bad of [[...many,many[0]],[photos[0],photos[0]],[{...photos[0],id:'private/path'}],[{...photos[0],caption:'x'.repeat(301)}],[{...photos[0],placement:'elsewhere'}],[{...photos[0],url:'https://external.test'}],[{...photos[0],featured:true,placement:'story'}],[photos[1],{...photos[1],id:crypto.randomUUID()}]])assert.throws(()=>normalizeSnapshot({...input,photos:bad},'about-memories'));
+ assert.throws(()=>normalizeSnapshot({...input,memories:legacy.memories},'about-memories'));
+ validateMemoryRelease(input);
 });

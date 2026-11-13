@@ -1,0 +1,178 @@
+[
+  {
+    "filename": "ezgif-5-5d73f5ff4c.gif",
+    "format": "GIF",
+    "formatGuid": "b96b3cb0-0728-11d3-9d7b-0000f81ef32e",
+    "width": 450,
+    "height": 231,
+    "bytes": 511740,
+    "frames": 14,
+    "sha256": "4e8975e65d76e5d3c7edcaa5e012acefac52cdcf81f2e3b00eee44bcf1fee465",
+    "metadataIds": [
+      20736,
+      37510,
+      20737,
+      20738,
+      20739
+    ],
+    "classification": "Animated non-Minecraft avatar lineup",
+    "visual_description": "Fourteen inspected frames show a dancing lineup of animal-like avatars and a human-like avatar against a blue sky. No Minecraft builds or machines.",
+    "temporal_assessment": "Unknown; not evidence of a current or historical Minecraft server.",
+    "quality": "450x231 is small; animated/moving and visibly compressed.",
+    "privacy": "Avatar/model ownership and participant context unknown; no visible server address or credentials.",
+    "decision": "Exclude from website; unrelated to the historical Minecraft story and requires source/model rights review."
+  },
+  {
+    "filename": "Love.png",
+    "format": "PNG",
+    "formatGuid": "b96b3caf-0728-11d3-9d7b-0000f81ef32e",
+    "width": 3840,
+    "height": 2160,
+    "bytes": 1837854,
+    "frames": 1,
+    "sha256": "d34c3f0251887cbfe3acbc36ceacc62c938a2a717eff78fd7e32fda17f4817a8",
+    "metadataIds": [
+      20752,
+      20753,
+      20754
+    ],
+    "classification": "Posed Minecraft-style scene / possible render",
+    "visual_description": "Stone hall with tall coloured windows, candles, wooden seating, red runner and posed Minecraft characters.",
+    "temporal_assessment": "Historical collection per owner; precise event, date, world and renderer unknown.",
+    "quality": "3840x2160; crisp wide composition, group spread across frame.",
+    "privacy": "No visible chat, player names, address or credentials. Personal/ceremonial context and artwork authorship need identification.",
+    "decision": "Hold for owner context and creator permission; possible later Gallery entry. Do not call it a wedding or identify participants without confirmation."
+  },
+  {
+    "filename": "Minecraft 11_18_2018 2_16_01 PM (1).png",
+    "format": "PNG",
+    "formatGuid": "b96b3caf-0728-11d3-9d7b-0000f81ef32e",
+    "width": 1439,
+    "height": 820,
+    "bytes": 993431,
+    "frames": 1,
+    "sha256": "9d95417eaaf13d1df7367487e437a192eea2399e1b565a4ab18282e493bbf4a7",
+    "metadataIds": [
+      771,
+      769,
+      20752,
+      20753,
+      20754
+    ],
+    "classification": "Minecraft group screenshot",
+    "visual_description": "Grouped Minecraft avatars in a wood-and-stone hall with pale floor, foliage and dark red trim. No identifiable Create machinery.",
+    "temporal_assessment": "Historical per owner. Filename contains a 2018 timestamp; not independently verified capture history.",
+    "quality": "1439x820; strongest readable group composition. Central group survives an About opening 3:2 crop.",
+    "privacy": "No visible usernames, chat, address, account credentials or real faces; skin/participant context and captured-by credit unknown.",
+    "decision": "First choice for About Memories opening; Gallery history candidate, pending normal staff import/rights/credit review."
+  },
+  {
+    "filename": "Minecraft 11_19_2018 4_04_48 PM.png",
+    "format": "PNG",
+    "formatGuid": "b96b3caf-0728-11d3-9d7b-0000f81ef32e",
+    "width": 1440,
+    "height": 860,
+    "bytes": 857035,
+    "frames": 1,
+    "sha256": "49c5a8907df8b52a68eacc9524ddd44b1d3802adba71da14bd43c91a94e800f2",
+    "metadataIds": [
+      771,
+      769,
+      20752,
+      20753,
+      20754
+    ],
+    "classification": "Minecraft group screenshot",
+    "visual_description": "Minecraft avatars grouped between stone pillars with timber/foliage surroundings, lantern-like light blocks and cobweb decorations.",
+    "temporal_assessment": "Historical per owner. Timestamp is only in filename; world/date/participants unconfirmed.",
+    "quality": "1440x860 with generic Minecraft window title bar. Private proposed copy removes top 32px, yielding 1440x828. Group is smaller/darker than the hall shot.",
+    "privacy": "No visible chat, player name tags, server address or credentials. Window title is generic, not sensitive.",
+    "decision": "Second Gallery history candidate / alternate About opening. Use the cleaned private import copy after review; do not assume it is the same event as the other group shot."
+  },
+  {
+    "filename": "New Icon.png",
+    "format": "PNG",
+    "formatGuid": "b96b3caf-0728-11d3-9d7b-0000f81ef32e",
+    "width": 1920,
+    "height": 1080,
+    "bytes": 2454751,
+    "frames": 1,
+    "sha256": "e697e2d00abb77f2c598a2d34b4abf19a7d5e076f6fe09f53676e9576306c3de",
+    "metadataIds": [
+      20752,
+      20753,
+      20754
+    ],
+    "classification": "Minecraft landscape / tree settlement",
+    "visual_description": "Large tree forms, elevated wooden structures and small lights in a misty landscape at dusk. No HUD, names, people or obvious machines.",
+    "temporal_assessment": "Historical previous-server collection per owner; exact date, world, builder and capture method unknown.",
+    "quality": "1920x1080. Atmospheric but dark; works as contextual landscape rather than detailed engineering evidence.",
+    "privacy": "No visible private information or watermark. Filename is misleading: this is a landscape, not official branding.",
+    "decision": "Selected for the Servers Hub historical context figure; second choice for About history slot and Gallery. Only the two optimized copies are public."
+  },
+  {
+    "filename": "New WP Jinxed.png",
+    "format": "PNG",
+    "formatGuid": "b96b3caf-0728-11d3-9d7b-0000f81ef32e",
+    "width": 3840,
+    "height": 2160,
+    "bytes": 4399692,
+    "frames": 1,
+    "sha256": "56c4ea31696570e72441f5775e8166da1b4aaa4c43bdb96c784243859fca3b89",
+    "metadataIds": [
+      20752,
+      20753,
+      20754
+    ],
+    "classification": "Posed Minecraft-style scene / possible render",
+    "visual_description": "Posed avatars beside a tree, planted steps, stone blocks and lanterns in a wooded night scene; some edge characters are cut by the original framing.",
+    "temporal_assessment": "Historical collection per owner, but date, scene, characters and renderer unconfirmed.",
+    "quality": "3840x2160; detailed but dark and tightly framed. Additional tight crops would lose characters.",
+    "privacy": "No visible private text or server address; character identity/skin/artist permissions unknown.",
+    "decision": "Hold for creator/context confirmation; possible future Gallery artwork, not proof of an actual server moment or current Create gameplay."
+  },
+  {
+    "filename": "novaskin-wallpaper-3players.png",
+    "format": "PNG",
+    "formatGuid": "b96b3caf-0728-11d3-9d7b-0000f81ef32e",
+    "width": 1920,
+    "height": 1080,
+    "bytes": 1646775,
+    "frames": 1,
+    "sha256": "410ed90a89e338cded9093efc3c91bcea2d56bc5c4473ea04b1d7376773abfaa",
+    "metadataIds": [
+      771,
+      769,
+      20752,
+      20753,
+      20754
+    ],
+    "classification": "Template-rendered Minecraft-style artwork",
+    "visual_description": "Three posed block characters on a sandy/wooden edge beside a leafy tree; visible Nova Skin mark at lower right.",
+    "temporal_assessment": "Unknown; filename and watermark suggest rendered wallpaper, not verified server capture.",
+    "quality": "1920x1080, clear but foreground characters occupy most of frame.",
+    "privacy": "Visible third-party mark; template/render and skin rights not established.",
+    "decision": "Exclude pending verifiable permission/attribution. Do not crop off the watermark as a substitute for permission."
+  },
+  {
+    "filename": "unknown.png",
+    "format": "PNG",
+    "formatGuid": "b96b3caf-0728-11d3-9d7b-0000f81ef32e",
+    "width": 157,
+    "height": 220,
+    "bytes": 106719,
+    "frames": 1,
+    "sha256": "ac2ba0f4d318cfd733078ebbe3f3446e6f595a809bbb757451c0303d41b9e98e",
+    "metadataIds": [
+      20752,
+      20753,
+      20754
+    ],
+    "classification": "Real-person portrait",
+    "visual_description": "Small portrait of a person under coloured lighting. No game environment.",
+    "temporal_assessment": "Unknown; identity/date unconfirmed.",
+    "quality": "157x220, visibly soft/noisy; unsuitable for enlargement.",
+    "privacy": "Identifiable real face; no publication consent supplied.",
+    "decision": "Exclude; original blocked from serving/build/Git. Do not upscale or assign to any member/staff identity."
+  }
+]

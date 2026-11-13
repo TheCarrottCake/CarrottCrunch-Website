@@ -125,3 +125,13 @@
 
 .public-v3 .v3-server-beyond { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; padding-block-start: 1rem; }
 .public-v3 .v3-server-beyond > span { font-weight: 750; color: var(--foliage-text); }
+
+/* One historical context figure, separate from current-server imagery. */
+.public-v3 .v3-server-history {display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:clamp(1.5rem,3vw,3rem);align-items:center;margin-block-start:var(--v3-server-section-gap);}
+.public-v3 .v3-server-history>div {min-width:0;}
+.public-v3 .v3-server-history h2 {margin-block:.6rem 1rem;}
+.public-v3 .v3-server-history figure {min-width:0;margin:0;}
+.public-v3 .v3-server-history-image {aspect-ratio:16/9;overflow:hidden;border-radius:.75rem;background:var(--featured);}
+.public-v3 .v3-server-history-image img {display:block;width:100%;height:100%;object-fit:cover;}
+.public-v3 .v3-server-history figcaption {font-size:.8rem;line-height:1.7;color:var(--text-muted);margin-top:.75rem;}
+@media(max-width:760px){.public-v3 .v3-server-history {grid-template-columns:minmax(0,1fr);gap:1rem;}}
